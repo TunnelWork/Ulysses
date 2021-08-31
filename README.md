@@ -1,6 +1,7 @@
 # Ulysses
-Codename: Ulysses, a Trojan-GFW service manager built in Go.
+Codename: Ulysses, a generic proxy/tunneling service manager built in Go.
 
-## Features
-- [ ] MySQL-based management
-- [ ] gRPC API-based management
+## Supported Protocols
+- Trojan/Trojan-Go
+    - [ ] MySQL-based management
+    - [ ] gRPC API-based management (Trojan-Go)
