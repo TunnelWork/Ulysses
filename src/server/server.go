@@ -6,7 +6,7 @@ type AccountConfigurables map[string]string
 // It is up to module designer to parse/utilize the AccountUsage.
 type AccountUsage interface {
 	ForClient() (usage string)
-	ForAdminUsage() (usage string)
+	ForAdmin() (usage string)
 }
 
 // It is up to module designer to parse/utilize the Credential.
@@ -36,13 +36,13 @@ type Server interface {
 	// DeleteAccount() takes in:
 	// - an int as the Account ID specifying the exact account needs to be deleted
 	// And returns an error, if nil, success. Otherwise, check the error.
-	DeleteAccount(accid int) (err error)
+	DeleteAccount(accid int, sconf *ServerConfigurables) (err error)
 
 	//////// Optional Functions: may be called by Ulysses Extensions
 
 	// GetCredentials() fetch the Credential in JSON string format for a specific Account specified by accid.
-	GetCredentials(accid int) (credential []Credential)
+	GetCredentials(accid int, sconf *ServerConfigurables) (credential []Credential)
 
 	// GetUsage() fetch the history usage of a service
-	GetUsage(accid int) (usage AccountUsage)
+	GetUsage(accid int, sconf *ServerConfigurables) (usage AccountUsage)
 }
