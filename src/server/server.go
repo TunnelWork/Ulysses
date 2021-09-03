@@ -19,30 +19,36 @@ type Server interface {
 	//////// Mandatory Functions: will be called by Ulysses Core
 
 	// AddAccount() takes in:
-	// - (a ptr to) a ServerConfigurables specifically designed for the target server. (e.g., Database credentials, IP addresses)
-	// - (a ptr to) a AccountConfigurables specifically designed for the account to be created. (e.g., Password, Service Port, Quota)
-	// And returns an integer & an error
-	// - if err == nil: int as the Account ID, aka Service ID/Product ID, for the newly created account. It's caller's responsibility to store the accid and (possibly) associate it with a user.
-	// - otherwise, discard the int and check the err
-	AddAccount(sconf *ServerConfigurables, aconf *AccountConfigurables) (accid int, err error)
+	// - a ServerConfigurables specifically designed for the target server. (e.g., Database credentials, IP addresses)
+	// - a slice of AccountConfigurables specifically designed for each accounts to be created. (e.g., Password, Service Port, Quota)
+	// And returns a slice of integer & an error
+	// - if err == nil: accID includes the Account ID for each account added, aka Service ID/Product ID, for the newly created account.
+	// It's caller's responsibility to store the accid and (possibly) associate it with a user.
+	// - otherwise, accID includes the Account ID for each account added BEFORE the err occurs. (No more operation after err)
+	AddAccount(sconf ServerConfigurables, aconf []AccountConfigurables) (accID []int, err error)
 
 	// UpdateAccount() takes in:
-	// - an int as the Account ID specifying the exact account needs to be updated
-	// - (a ptr to) a ServerConfigurables specifically designed for the target server. (e.g., Database credentials, IP addresses)
-	// - (a ptr to) a AccountConfigurables specifically designed for the account to be created. (e.g., Password, Service Port, Quota)
-	// And returns an error, if nil, success. Otherwise, check the error.
-	UpdateAccount(accid int, sconf *ServerConfigurables, aconf *AccountConfigurables) (err error)
+	// - a slice of int as the Account ID specifying each account needs to be updated
+	// - a ServerConfigurables specifically designed for the target server. (e.g., Database credentials, IP addresses)
+	// - a slice of AccountConfigurables specifically designed for the account to be created. (e.g., Password, Service Port, Quota)
+	// And returns a slice of integer & an error
+	// - if err == nil: accID includes the Account ID for each account updated, aka Service ID/Product ID, for the updated account.
+	// - otherwise, accID includes the Account ID for each account updated BEFORE the err occurs. (No more operation after err)
+	UpdateAccount(accID []int, sconf ServerConfigurables, aconf []AccountConfigurables) (successAccID []int, err error)
 
 	// DeleteAccount() takes in:
-	// - an int as the Account ID specifying the exact account needs to be deleted
-	// And returns an error, if nil, success. Otherwise, check the error.
-	DeleteAccount(accid int, sconf *ServerConfigurables) (err error)
+	// - a slice of int as the Account ID specifying each account needs to be deleted
+	// - a ServerConfigurables specifically designed for the target server. (e.g., Database credentials, IP addresses)
+	// And returns a slice of integer & an error
+	// - if err == nil: accID includes the Account ID for each account deleted, aka Service ID/Product ID, for the deleted account.
+	// - otherwise, accID includes the Account ID for each account deleted BEFORE the err occurs. (No more operation after err)
+	DeleteAccount(accID []int, sconf ServerConfigurables) (successAccID []int, err error)
 
 	//////// Optional Functions: may be called by Ulysses Extensions
 
-	// GetCredentials() fetch the Credential in JSON string format for a specific Account specified by accid.
-	GetCredentials(accid int, sconf *ServerConfigurables) (credential []Credential)
+	// GetCredentials() fetch Credentials in JSON string format for each Account specified by accID.
+	GetCredentials(accID []int, sconf ServerConfigurables) (credentials []Credential)
 
-	// GetUsage() fetch the history usage of a service
-	GetUsage(accid int, sconf *ServerConfigurables) (usage AccountUsage)
+	// GetUsage() fetch the history usages of each service specified by accID
+	GetUsage(accID []int, sconf ServerConfigurables) (usages []AccountUsage)
 }
