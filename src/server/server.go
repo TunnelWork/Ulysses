@@ -1,8 +1,5 @@
 package server
 
-type ServerConfigurables map[string]string
-type AccountConfigurables map[string]string
-
 // It is up to module designer to parse/utilize the AccountUsage.
 type AccountUsage interface {
 	ForClient() (usage string)
