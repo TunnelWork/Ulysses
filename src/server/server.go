@@ -45,8 +45,8 @@ type Server interface {
 	//////// Optional Functions: may be called by Ulysses 3rd-party Extensions
 
 	// GetCredentials() fetch Credentials in JSON string format for each Account specified by accID.
-	GetCredentials(accID []int) (credentials []Credential)
+	GetCredentials(accID []int) (credentials []Credential, err error)
 
 	// GetUsage() fetch the history usages of each service specified by accID
-	GetUsage(accID []int) (usages []AccountUsage)
+	GetUsage(accID []int) (usages []AccountUsage, err error)
 }
