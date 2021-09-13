@@ -1,17 +1,9 @@
 package server
 
-// It is up to module designer to parse/utilize the AccountUsage.
-type AccountUsage interface {
-	ForClient() (usage string)
-	ForAdmin() (usage string)
-}
-
-// It is up to module designer to parse/utilize the Credential.
-type Credential interface {
-	ForClient() (credential string)
-	ForAdmin() (credential string)
-}
-
+// Server interface-compatible structs should be copyable.
+// Recommended design:
+// - Pointer to struct
+// - Member pointers in struct
 type Server interface {
 	//////// Mandatory Functions: will be called by Ulysses Core
 
@@ -45,8 +37,8 @@ type Server interface {
 	//////// Optional Functions: may be called by Ulysses 3rd-party Extensions
 
 	// GetCredentials() fetch Credentials in JSON string format for each Account specified by accID.
-	GetCredentials(accID []int) (credentials []Credential, err error)
+	GetCredentials(accID []int) ([]Credential, error)
 
 	// GetUsage() fetch the history usages of each service specified by accID
-	GetUsage(accID []int) (usages []AccountUsage, err error)
+	GetUsage(accID []int) ([]AccountUsage, error)
 }
