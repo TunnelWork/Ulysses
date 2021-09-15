@@ -15,8 +15,8 @@ type ServerRegistrar interface {
 
 type ServerRegistrarMap map[string]ServerRegistrar
 
-// addServerRegistrar adds a registrar to the global ServerRegistrarMap
-func addServerRegistrar(serverTypeName string, serverReg ServerRegistrar) {
+// AddServerRegistrar adds a registrar to the global ServerRegistrarMap
+func AddServerRegistrar(serverTypeName string, serverReg ServerRegistrar) {
 	regManagers[serverTypeName] = serverReg
 }
 
