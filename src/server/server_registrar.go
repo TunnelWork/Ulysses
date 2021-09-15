@@ -9,15 +9,19 @@ var (
 // - Pointer to struct
 // - Member pointers in struct
 type ServerRegistrar interface {
-	NewServer(sconf ServerConfigurables) (Server, error)
+	// NewServer returns a Server interface with internal state set to reflect sconf.
+	NewServer(sconf Configurables) (Server, error)
 }
 
 type ServerRegistrarMap map[string]ServerRegistrar
 
-func AddServerRegistrar(serverTypeName string, serverReg ServerRegistrar) {
+// addServerRegistrar adds a registrar to the global ServerRegistrarMap
+func addServerRegistrar(serverTypeName string, serverReg ServerRegistrar) {
 	regManagers[serverTypeName] = serverReg
 }
 
-func (srm ServerRegistrarMap) NewServerByType(serverType string, sconf ServerConfigurables) (Server, error) {
+// NewServerByType returns a Server interface specified by serverType according to the ServerRegistrarMap
+// the internal state of the returned Server interface should reflect sconf.
+func (srm ServerRegistrarMap) NewServerByType(serverType string, sconf Configurables) (Server, error) {
 	return srm[serverType].NewServer(sconf)
 }

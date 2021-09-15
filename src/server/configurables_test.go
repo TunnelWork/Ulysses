@@ -32,12 +32,12 @@ var (
 )
 
 func TestJsonToConfigurables(t *testing.T) {
-	Configurables, err := JsonToConfigurables(ExampleJson)
+	configurables, err := JsonToConfigurables(ExampleJson)
 	if err != nil {
 		t.Errorf("JsonToConfigurables() returns error:%s\n", err)
 	}
-	ServerConfigurables := ServerConfigurables(Configurables)
-	AccountConfigurables := AccountConfigurables(Configurables)
+	ServerConfigurables := Configurables(configurables)
+	AccountConfigurables := Configurables(configurables)
 
 	for key, value := range ServerConfigurables {
 		if value != AccountConfigurables[key] {
