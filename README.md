@@ -1,7 +1,9 @@
 # Ulysses
-Codename: Ulysses, a generic proxy/tunneling service manager built in Go.
+Codename: Ulysses, a generic webhosting/webservice manager backend built in Go featuring high programmability, high concurrency and low resource consumption. 
 
-## Supported Protocols
-- Trojan/Trojan-Go
-    - [ ] MySQL-based management
-    - [ ] gRPC API-based management (Trojan-Go)
+## Repository Architecture
+```
++ /.                Mainframe, a wrapper providing API, Cronjob, logging)
+| - server/         A module specifying Server and Account interactions.
+| ...
+```
