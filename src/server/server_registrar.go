@@ -1,7 +1,7 @@
 package server
 
 var (
-	regManagers ServerRegistrarMap
+	regManagers ServerRegistrarMap = ServerRegistrarMap{}
 )
 
 // ServerRegistrar interface-compatible structs should be copyable.
@@ -17,6 +17,9 @@ type ServerRegistrarMap map[string]ServerRegistrar
 
 // AddServerRegistrar adds a registrar to the global ServerRegistrarMap
 func AddServerRegistrar(serverTypeName string, serverReg ServerRegistrar) {
+	if regManagers == nil {
+		regManagers = ServerRegistrarMap{}
+	}
 	regManagers[serverTypeName] = serverReg
 }
 

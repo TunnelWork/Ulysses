@@ -1,0 +1,9 @@
+host: 127.0.0.1
+port: 3306
+database: Ulysses_dev
+user: ulysses
+passwd: u1y5s3s
+
+ca-cert-file: /home/shared/.cert/ca-cert.pem
+client-key-file: /home/ulysses/.cert/key.pem
+client-cert-file: /home/ulysses/.cert/cert.pem
