@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io/ioutil"
 
+	"github.com/TunnelWork/Ulysses/src/internal/conf"
 	"github.com/go-sql-driver/mysql"
 )
 
@@ -23,27 +24,27 @@ func DBConnected(db *sql.DB) bool {
 	return true
 }
 
-func DBConnect(sconf MysqlConf) (*sql.DB, error) {
+func DBConnect(sconf conf.DatabaseConfig) (*sql.DB, error) {
 	driverName := "mysql"
 	// dsn = fmt.Sprintf("user:password@tcp(localhost:5555)/dbname?tls=skip-verify&autocommit=true")
-	dsn := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?loc=Local", sconf.mysqlUser, sconf.mysqlPasswd, sconf.mysqlHost, sconf.mysqlPort, sconf.mysqlDatabase)
+	dsn := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?loc=Local", sconf.User, sconf.Passwd, sconf.Host, sconf.Port, sconf.Database)
 	if mysqlAutoCommit {
 		dsn += "&autocommit=true"
 	}
-	if sconf.mysqlCAPath != "" {
+	if sconf.CA != "" {
 		dsn += "&tls=custom"
 		rootCertPool := x509.NewCertPool()
-		pem, err := ioutil.ReadFile(sconf.mysqlCAPath)
+		pem, err := ioutil.ReadFile(sconf.CA)
 		if err != nil {
 			return nil, err
 		}
 		if ok := rootCertPool.AppendCertsFromPEM(pem); !ok {
 			return nil, ErrCannotAppendCert
 		}
-		if sconf.mysqlKeyPath != "" && sconf.mysqlCertPath != "" {
+		if sconf.ClientKey != "" && sconf.ClientCert != "" {
 			// Both Key and Cert are set. Go with customer cert.
 			clientCert := make([]tls.Certificate, 0, 1)
-			certs, err := tls.LoadX509KeyPair(sconf.mysqlCertPath, sconf.mysqlKeyPath)
+			certs, err := tls.LoadX509KeyPair(sconf.ClientCert, sconf.ClientKey)
 			if err != nil {
 				return nil, err
 			}
@@ -55,7 +56,7 @@ func DBConnect(sconf MysqlConf) (*sql.DB, error) {
 				MinVersion:   tls.VersionTLS12,
 				MaxVersion:   0,
 			})
-		} else if sconf.mysqlKeyPath == "" && sconf.mysqlCertPath == "" {
+		} else if sconf.ClientKey == "" && sconf.ClientCert == "" {
 			// Neither Key or Cert is set. Proceed without customer cert.
 			mysql.RegisterTLSConfig("custom", &tls.Config{
 				// ServerName: "example.com",

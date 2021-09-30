@@ -1,0 +1,19 @@
+sys:
+  api_host: 127.0.0.1
+  api_port: 8900
+
+log:
+  verbose: true
+  log_path: ./alternative.log
+  log_level: 5 # All logs
+
+db:
+  host: 127.0.0.1
+  port: 3306
+  database: ulysses
+  user: ulysses_dev
+  passwd: u1y5s3s_d3v
+
+  ca-cert-file: /home/shared/.cert/ca-cert.pem
+  client-key-file: /home/ulysses/.cert/key.pem
+  client-cert-file: /home/ulysses/.cert/cert.pem
