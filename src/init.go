@@ -10,21 +10,13 @@ import (
 	"github.com/TunnelWork/Ulysses/src/internal/logger"
 )
 
-// Logging Level
-// 0: Absolute No Logging, you don't even know how it crashed (unless panic)
-// 5: Log every non-trivial thing. FBI Open Up!
-const (
-	logNull uint8 = iota
-	logFatal
-	logError
-	logWarning
-	logInfo
-	logDebug
-)
-
 var (
 	configPath   string
 	masterConfig conf.Config
+
+	// Debug Switches
+	skipDatabase bool
+	skipLogger   bool
 )
 
 func loadConfig() {
@@ -43,6 +35,8 @@ func loadConfig() {
 func initLogger() {
 	if err := logger.Init(masterConfig.Log); err != nil {
 		panic(err)
+	} else {
+		logger.Info("initLogger(): success")
 	}
 }
 
@@ -53,21 +47,37 @@ func initDB() {
 	if err != nil {
 		logger.Fatal("initDB(): ", err)
 	} else {
-		logger.Debug("initDB(): PASS")
+		logger.Info("initDB(): success")
 	}
 }
 
-func init() {
-	//// GLOBAL INIT BEGIN ////
-	flag.StringVar(&configPath, "configPath", "./conf/ulysses.yaml", "Ulysses Configuration File")
+func parseArgs() {
+	flag.StringVar(&configPath, "config", "./conf/ulysses.yaml", "Ulysses Configuration File")
+	flag.BoolVar(&skipDatabase, "skip-db", false, "Not to use database. Thus all DB operations will give error.")
+	flag.BoolVar(&skipLogger, "skip-log", false, "Not to use logger. Thus logging functions will do literally nothing.")
 	flag.Parse()
+}
 
+func globalInit() {
 	loadConfig()
-	/*** GLOBAL INIT END ***/
-	/*** SYSTEM MODULE INIT BEGIN ***/
-	initLogger() // First thing first or we have nowhere to write
-	initDB()
-	/*** SYSTEM MODULE INIT END ***/
+}
 
-	select {}
+func init() {
+	/*** GLOBAL INIT BEGIN ***/
+	parseArgs()
+	globalInit()
+	/*** GLOBAL INIT END ***/
+
+	/*** SYSTEM MODULE INIT BEGIN ***/
+	if !skipLogger {
+		initLogger()
+	} else {
+		fmt.Println("initLogger(): --skip-log detected, skipping. What Age is this, Dark Age?")
+	}
+	if !skipDatabase {
+		initDB()
+	} else {
+		logger.Warning("initDB(): --skip-db detected, skipping.")
+	}
+	/*** SYSTEM MODULE INIT END ***/
 }

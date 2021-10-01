@@ -14,11 +14,11 @@ var (
 	loggerMutex    *sync.Mutex // TODO: Use a ticket lock for fairness, especially at high concurrency
 	fileLogger     *log.Logger = nil
 
-	Debug   = func(...interface{}) {}
-	Info    = func(...interface{}) {}
-	Warning = func(...interface{}) {} //
-	Error   = func(...interface{}) {} // Error which is handled (or at least handlable)
-	Fatal   = func(...interface{}) {} // Fatal Error which prevents the system from continue
+	Debug   = func(...interface{}) {} // Trivial and aligning with best practices
+	Info    = func(...interface{}) {} // Non-trivial and aligning with best practices
+	Warning = func(...interface{}) {} // Non-trivial and not aligning with best practices
+	Error   = func(...interface{}) {} // Important and not in good condition, system can keep up
+	Fatal   = func(...interface{}) {} // Important and not in good condition, system can't keep up
 )
 
 func Init(loggerConfig conf.LoggerConfig) error {

@@ -20,7 +20,7 @@ func LoadUlyssesConfig(content []byte) (Config, error) {
 	newConfig := Config{
 		Sys: defaultSystemConfig(),
 		Log: defaultLoggerConfig(),
-		// DB: DatabaseConfig{}, // No default DB config provided
+		DB:  defaultDatabaseConfig(),
 	}
 	err := yaml.Unmarshal(content, &newConfig)
 

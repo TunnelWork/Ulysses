@@ -1,16 +1,16 @@
 package conf
 
-type LoggerConfig struct {
-	Verbose  bool   `yaml:"verbose"`
-	Filepath string `yaml:"log_path"`
-	Level    uint8  `yaml:"log_level"`
-}
-
 const (
 	defaultVerbose      bool   = false
 	defaultLogFilepath  string = "./Ulysses.log"
 	defaultLoggingLevel uint8  = 3
 )
+
+type LoggerConfig struct {
+	Verbose  bool   `yaml:"verbose"`
+	Filepath string `yaml:"log_path"`
+	Level    uint8  `yaml:"log_level"`
+}
 
 func defaultLoggerConfig() LoggerConfig {
 	return LoggerConfig{

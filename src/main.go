@@ -5,4 +5,7 @@ func main() {
 	// 	fmt.Println("Allow Unsafe!")
 	// 	security.AllowUnsafeAPI()
 	// }
+	for {
+
+	}
 }
