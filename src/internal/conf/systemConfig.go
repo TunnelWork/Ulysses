@@ -6,8 +6,9 @@ const (
 )
 
 type SystemConfig struct {
-	Host string `yaml:"api_host,omitempty"`
-	Port uint16 `yaml:"api_port"`
+	Host                        string `yaml:"api_host,omitempty"`
+	Port                        uint16 `yaml:"api_port"`
+	SystemTickPeriodMillisecond uint16 `yaml:"sys_tick_per_ms"` // 1~65535ms per system tick.
 }
 
 func defaultSystemConfig() SystemConfig {

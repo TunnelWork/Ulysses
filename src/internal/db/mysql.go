@@ -1,6 +1,7 @@
 package db
 
 import (
+	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"database/sql"
@@ -80,4 +81,23 @@ func DBConnect(sconf conf.DatabaseConfig) (*sql.DB, error) {
 	}
 
 	return db, nil
+}
+
+func DBConnectWithContext(ctx context.Context, sconf conf.DatabaseConfig) (*sql.DB, error) {
+	var dbConn *sql.DB
+	var err error
+
+	dbDone := make(chan bool)
+
+	go func() {
+		dbConn, err = DBConnect(sconf)
+		dbDone <- true
+	}()
+
+	select {
+	case <-dbDone:
+		return dbConn, err
+	case <-ctx.Done():
+		return dbConn, ctx.Err()
+	}
 }

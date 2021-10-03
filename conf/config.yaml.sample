@@ -1,7 +1,9 @@
 sys:
   api_host: 127.0.0.1
   api_port: 8900
-
+  # A low ticking period combined with high log level may cause trouble
+  sys_tick_per_ms: 500 
+  
 log:
   verbose: true
   log_path: ./alternative.log

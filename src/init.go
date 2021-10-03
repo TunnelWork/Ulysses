@@ -13,10 +13,6 @@ import (
 var (
 	configPath   string
 	masterConfig conf.Config
-
-	// Debug Switches
-	skipDatabase bool
-	skipLogger   bool
 )
 
 func loadConfig() {
@@ -31,6 +27,12 @@ func loadConfig() {
 	}
 }
 
+var (
+	// Debug Switches
+	skipDatabase bool
+	skipLogger   bool
+)
+
 // initLogger() can ONLY be called after loadConfig()
 func initLogger() {
 	if err := logger.Init(masterConfig.Log); err != nil {
@@ -42,7 +44,7 @@ func initLogger() {
 
 // initDB() SHOULD be called after initLogger()
 func initDB() {
-	// DB Conn Livess Test
+	// DB Conn Livess Test, block until fail. No timeout.
 	_, err := db.DBConnect(masterConfig.DB)
 	if err != nil {
 		logger.Fatal("initDB(): ", err)
@@ -60,6 +62,7 @@ func parseArgs() {
 
 func globalInit() {
 	loadConfig()
+	initWaitGroup()
 }
 
 func init() {
@@ -68,7 +71,7 @@ func init() {
 	globalInit()
 	/*** GLOBAL INIT END ***/
 
-	/*** SYSTEM MODULE INIT BEGIN ***/
+	/*** INTERNAL MODULE INIT BEGIN ***/
 	if !skipLogger {
 		initLogger()
 	} else {
@@ -79,5 +82,11 @@ func init() {
 	} else {
 		logger.Warning("initDB(): --skip-db detected, skipping.")
 	}
+	/*** INTERNAL MODULE INIT END ***/
+
+	/*** SYSTEM MODULE INIT BEGIN ***/
+	initSystemTicking() // First one!
+	initUlyssesServer()
+
 	/*** SYSTEM MODULE INIT END ***/
 }
