@@ -10,9 +10,11 @@ import (
 )
 
 var (
-	verboseLogging bool        = false
-	loggerMutex    *sync.Mutex // TODO: Use a ticket lock for fairness, especially at high concurrency
-	fileLogger     *log.Logger = nil
+	verboseLogging  bool        = false
+	loggerMutex     *sync.Mutex // TODO: Use a ticket lock for fairness, especially at high concurrency
+	fileLogger      *log.Logger = nil
+	loggerWaitGroup *sync.WaitGroup
+	exitingFunc     *func()
 
 	Debug   = func(...interface{}) {} // Trivial and aligning with best practices
 	Info    = func(...interface{}) {} // Non-trivial and aligning with best practices
@@ -52,29 +54,72 @@ func Init(loggerConfig conf.LoggerConfig) error {
 	return nil
 }
 
+func InitWithWaitGroupAndExitingFunc(wg *sync.WaitGroup, exitFunc *func(), loggerConfig conf.LoggerConfig) error {
+	loggerWaitGroup = wg
+	exitingFunc = exitFunc
+	return Init(loggerConfig)
+}
+
+// LastWord() blocks and is only used for CLEAN, INTENDED EXITING.
+// calling LastWord() does not invoke exitingFunc()
+func LastWord(v ...interface{}) {
+	loggerMutex.Lock()
+	defer loggerMutex.Unlock()
+	if loggerWaitGroup != nil {
+		loggerWaitGroup.Wait()
+	}
+	if verboseLogging {
+		fmt.Print("LASTWORD: ", fmt.Sprint(v...), "\n")
+	}
+	if fileLogger != nil {
+		fileLogger.Print("LASTWORD: ", fmt.Sprint(v...), "\n")
+	}
+	os.Exit(0)
+}
+
+// Non-block
 func _Debug(v ...interface{}) {
+	if loggerWaitGroup != nil {
+		loggerWaitGroup.Add(1)
+	}
 	go _debug(v...)
 }
 
+// Non-block
 func _Info(v ...interface{}) {
+	if loggerWaitGroup != nil {
+		loggerWaitGroup.Add(1)
+	}
 	go _info(v...)
 }
 
+// Non-block
 func _Warning(v ...interface{}) {
+	if loggerWaitGroup != nil {
+		loggerWaitGroup.Add(1)
+	}
 	go _warning(v...)
 }
 
+// Non-block
 func _Error(v ...interface{}) {
+	if loggerWaitGroup != nil {
+		loggerWaitGroup.Add(1)
+	}
 	go _error(v...)
 }
 
+// Block!
 func _Fatal(v ...interface{}) {
-	go _fatal(v...)
+	_fatal(v...) // Not calling as goroutine because non-block.
 }
 
 func _debug(v ...interface{}) {
 	loggerMutex.Lock()
 	defer loggerMutex.Unlock()
+	if loggerWaitGroup != nil {
+		defer loggerWaitGroup.Done()
+	}
 	if verboseLogging {
 		fmt.Print("DEBUG: ", fmt.Sprint(v...), "\n")
 	}
@@ -86,6 +131,9 @@ func _debug(v ...interface{}) {
 func _info(v ...interface{}) {
 	loggerMutex.Lock()
 	defer loggerMutex.Unlock()
+	if loggerWaitGroup != nil {
+		defer loggerWaitGroup.Done()
+	}
 	if verboseLogging {
 		fmt.Print("INFO: ", fmt.Sprint(v...), "\n")
 	}
@@ -97,6 +145,9 @@ func _info(v ...interface{}) {
 func _warning(v ...interface{}) {
 	loggerMutex.Lock()
 	defer loggerMutex.Unlock()
+	if loggerWaitGroup != nil {
+		defer loggerWaitGroup.Done()
+	}
 	if verboseLogging {
 		fmt.Print("WARNING: ", fmt.Sprint(v...), "\n")
 	}
@@ -108,6 +159,9 @@ func _warning(v ...interface{}) {
 func _error(v ...interface{}) {
 	loggerMutex.Lock()
 	defer loggerMutex.Unlock()
+	if loggerWaitGroup != nil {
+		defer loggerWaitGroup.Done()
+	}
 	if verboseLogging {
 		fmt.Print("ERROR: ", fmt.Sprint(v...), "\n")
 	}
@@ -118,12 +172,20 @@ func _error(v ...interface{}) {
 
 func _fatal(v ...interface{}) {
 	loggerMutex.Lock()
-	defer loggerMutex.Unlock()
+
 	if verboseLogging {
 		fmt.Print("FATAL: ", fmt.Sprint(v...), "\n")
 	}
 	if fileLogger != nil {
 		fileLogger.Print("FATAL: ", fmt.Sprint(v...), "\n")
 	}
+
+	loggerMutex.Unlock()
+
+	if exitingFunc != nil { // if set, call exitingFunc() first to clear goroutines
+		(*exitingFunc)()
+	}
+
+	loggerWaitGroup.Wait() // Fatal will exit the system, so make sure the WaitGroup is cleared before that.
 	os.Exit(1)
 }

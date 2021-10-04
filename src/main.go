@@ -12,16 +12,21 @@ func main() {
 	startSystemTicking() // start system ticking so everything starts
 
 	// 10 second to make sure everything is working fine
-	time.Sleep(10 * time.Second)
+	logger.Debug("time.Sleep(): Sleep for 6s.")
+	time.Sleep(6 * time.Second)
+
+	// TODO: REMOVE
+	logger.Fatal("OMG I crashed ;)")
+	select {}
 
 	// Tired? Let's get out of here
+	logger.Debug("globalExitSignal(): Now signal for exiting.")
 	globalExitSignal()
 
-	// Block until all goroutine to return
-	globalWaitGroup.Wait()
-
 	// All done
-	logger.Warning("main(): system exiting... good night.")
+	logger.Warning("main(): system will exit upon globalWaitGroup becoming cleared. Gute Nacht.")
+
+	globalWaitGroup.Wait()
 }
 
 // BizLogic should NOT block.

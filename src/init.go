@@ -29,13 +29,16 @@ func loadConfig() {
 
 var (
 	// Debug Switches
-	skipDatabase bool
-	skipLogger   bool
+	noDatabase bool
+	noLogger   bool
+	noTick     bool
 )
 
 // initLogger() can ONLY be called after loadConfig()
 func initLogger() {
-	if err := logger.Init(masterConfig.Log); err != nil {
+	// if err := logger.Init(masterConfig.Log); err != nil {
+	var exitFunc func() = globalExitSignal
+	if err := logger.InitWithWaitGroupAndExitingFunc(&globalWaitGroup, &exitFunc, masterConfig.Log); err != nil {
 		panic(err)
 	} else {
 		logger.Info("initLogger(): success")
@@ -48,6 +51,7 @@ func initDB() {
 	_, err := db.DBConnect(masterConfig.DB)
 	if err != nil {
 		logger.Fatal("initDB(): ", err)
+		return
 	} else {
 		logger.Info("initDB(): success")
 	}
@@ -55,8 +59,9 @@ func initDB() {
 
 func parseArgs() {
 	flag.StringVar(&configPath, "config", "./conf/ulysses.yaml", "Ulysses Configuration File")
-	flag.BoolVar(&skipDatabase, "skip-db", false, "Not to use database. Thus all DB operations will give error.")
-	flag.BoolVar(&skipLogger, "skip-log", false, "Not to use logger. Thus logging functions will do literally nothing.")
+	flag.BoolVar(&noDatabase, "no-db", false, "Not to use database. Thus all DB operations will give error.")
+	flag.BoolVar(&noLogger, "no-log", false, "Not to use logger. Thus logging functions will do literally nothing.")
+	flag.BoolVar(&noTick, "no-tick", false, "Not to use ticker. No system ticking.")
 	flag.Parse()
 }
 
@@ -72,21 +77,24 @@ func init() {
 	/*** GLOBAL INIT END ***/
 
 	/*** INTERNAL MODULE INIT BEGIN ***/
-	if !skipLogger {
+	if !noLogger {
 		initLogger()
 	} else {
-		fmt.Println("initLogger(): --skip-log detected, skipping. What Age is this, Dark Age?")
+		fmt.Println("initLogger(): --no-log detected, skipping. What Age is this, Dark Age?")
 	}
-	if !skipDatabase {
+	if !noDatabase {
 		initDB()
 	} else {
-		logger.Warning("initDB(): --skip-db detected, skipping.")
+		logger.Warning("initDB(): --no-db detected, skipping.")
 	}
 	/*** INTERNAL MODULE INIT END ***/
 
 	/*** SYSTEM MODULE INIT BEGIN ***/
-	initSystemTicking() // First one!
+	if !noTick {
+		initSystemTicking() // First one!
+	} else {
+		logger.Warning("initSystemTicking(): --no-tick detected, skipping.")
+	}
 	initUlyssesServer()
-
 	/*** SYSTEM MODULE INIT END ***/
 }

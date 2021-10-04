@@ -25,6 +25,15 @@ func AddServerRegistrar(serverTypeName string, serverReg ServerRegistrar) {
 
 // NewServerByType returns a Server interface specified by serverType according to the ServerRegistrarMap
 // the internal state of the returned Server interface should reflect sconf.
-func (srm ServerRegistrarMap) NewServerByType(serverType string, sconf Configurables) (Server, error) {
-	return srm[serverType].NewServer(sconf)
+func NewServerByType(serverType string, sconf Configurables) (Server, error) {
+	var newServer Server
+	var err error
+
+	if sr, ok := regManagers[serverType]; ok {
+		newServer, err = sr.NewServer(sconf)
+	} else {
+		err = ErrServerUnknown
+	}
+
+	return newServer, err
 }

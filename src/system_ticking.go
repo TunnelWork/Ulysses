@@ -23,6 +23,9 @@ var (
 )
 
 func registerTickEvent(tickEventSign tickEventSignature, tickEvt func()) {
+	if tickEventMutex == nil {
+		return // No ticking
+	}
 	tickEventMutex.Lock()
 	defer tickEventMutex.Unlock()
 
@@ -56,7 +59,8 @@ func initSystemTicking() {
 
 func startSystemTicking() {
 	if tickEventPeriodMs == 0 {
-		logger.Fatal("startSystemTicking(): ticker uninitialized. call initSystemTicking().")
+		logger.Error("startSystemTicking(): ticker uninitialized -- call initSystemTicking() or no system ticking otherwise")
+		return
 	}
 
 	tickTicker = time.NewTicker(time.Duration(tickEventPeriodMs) * time.Millisecond)
@@ -76,6 +80,7 @@ func startSystemTicking() {
 }
 
 func singleTick() {
+	globalTickGroup.Add(1) // Block async operations relying on tick
 	tickEventMutex.Lock()
 	defer tickEventMutex.Unlock()
 	logger.Debug("singleTick(): now ticking")
@@ -83,4 +88,5 @@ func singleTick() {
 		logger.Debug("singleTick(): execute event with signature ", signature)
 		evt()
 	}
+	globalTickGroup.Done() // Allow async operations to continue
 }
