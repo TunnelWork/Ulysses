@@ -40,9 +40,9 @@ type pairNameSconf struct {
 }
 
 const (
-	serverConfigTableName = `servers`
-
-	reloadUlyssesServerSignature tickEventSignature = 0xFEEDBEEF // temp, we will come up with better names
+	serverConfigTableName                           = `servers`
+	mysqlConnectTimeout                             = 500 * time.Millisecond // If not established within timeout, will fail.
+	reloadUlyssesServerSignature tickEventSignature = 0xFEEDBEEF             // temp, we will come up with better names
 )
 
 var (
@@ -50,16 +50,6 @@ var (
 	serverConfMap      map[uint](pairNameSconf) // Initialize as empty map
 	serverConfMapDirty bool
 )
-
-func initUlyssesServer() {
-	if serverConfMapMutex == nil {
-		serverConfMapMutex = &sync.Mutex{}
-	}
-	serverConfMapDirty = true
-	reloadUlyssesServer()
-
-	registerTickEvent(reloadUlyssesServerSignature, reloadUlyssesServer)
-}
 
 // reloadUlyssesServer() enforces thread-safety with the serverConfMapMutex.
 func reloadUlyssesServer() {
@@ -71,7 +61,7 @@ func reloadUlyssesServer() {
 	}
 
 	serverConfMap = map[uint](pairNameSconf){} // Must clear the map
-	ctx, cancel := context.WithTimeout(context.Background(), 1000*time.Millisecond)
+	ctx, cancel := context.WithTimeout(context.Background(), mysqlConnectTimeout)
 	dbConn, err := db.DBConnectWithContext(ctx, masterConfig.DB)
 	defer cancel()
 	if err != nil {
@@ -136,7 +126,7 @@ func addUlyssesServer(serverTypeName string, serverConf server.Configurables) {
 	serverConfMapMutex.Lock()
 	defer serverConfMapMutex.Unlock()
 
-	ctx, cancel := context.WithTimeout(context.Background(), 1000*time.Millisecond)
+	ctx, cancel := context.WithTimeout(context.Background(), mysqlConnectTimeout)
 	dbConn, err := db.DBConnectWithContext(ctx, masterConfig.DB)
 	defer cancel()
 	if err != nil {
@@ -174,7 +164,7 @@ func updateUlyssesServer(id uint, serverTypeName string, serverConf server.Confi
 	serverConfMapMutex.Lock()
 	defer serverConfMapMutex.Unlock()
 
-	ctx, cancel := context.WithTimeout(context.Background(), 1000*time.Millisecond)
+	ctx, cancel := context.WithTimeout(context.Background(), mysqlConnectTimeout)
 	dbConn, err := db.DBConnectWithContext(ctx, masterConfig.DB)
 	defer cancel()
 	if err != nil {
@@ -206,7 +196,7 @@ func removeUlyssesServer(id uint, serverTypeName string) {
 	serverConfMapMutex.Lock()
 	defer serverConfMapMutex.Unlock()
 
-	ctx, cancel := context.WithTimeout(context.Background(), 1000*time.Millisecond)
+	ctx, cancel := context.WithTimeout(context.Background(), mysqlConnectTimeout)
 	dbConn, err := db.DBConnectWithContext(ctx, masterConfig.DB)
 	defer cancel()
 	if err != nil {

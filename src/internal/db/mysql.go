@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"io/ioutil"
 
-	"github.com/TunnelWork/Ulysses/src/internal/conf"
 	"github.com/go-sql-driver/mysql"
 )
 
@@ -25,7 +24,7 @@ func DBConnected(db *sql.DB) bool {
 	return true
 }
 
-func DBConnect(sconf conf.DatabaseConfig) (*sql.DB, error) {
+func DBConnect(sconf DatabaseConfig) (*sql.DB, error) {
 	driverName := "mysql"
 	// dsn = fmt.Sprintf("user:password@tcp(localhost:5555)/dbname?tls=skip-verify&autocommit=true")
 	dsn := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?loc=Local", sconf.User, sconf.Passwd, sconf.Host, sconf.Port, sconf.Database)
@@ -83,7 +82,7 @@ func DBConnect(sconf conf.DatabaseConfig) (*sql.DB, error) {
 	return db, nil
 }
 
-func DBConnectWithContext(ctx context.Context, sconf conf.DatabaseConfig) (*sql.DB, error) {
+func DBConnectWithContext(ctx context.Context, sconf DatabaseConfig) (*sql.DB, error) {
 	var dbConn *sql.DB
 	var err error
 

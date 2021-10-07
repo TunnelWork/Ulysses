@@ -47,16 +47,6 @@ func removeTickEvent(tickEventSign tickEventSignature) {
 	}
 }
 
-func initSystemTicking() {
-	tickEventMutex = &sync.Mutex{}
-	if masterConfig.Sys.SystemTickPeriodMillisecond == 0 {
-		tickEventPeriodMs = tickEventPeriodMsDefault
-	} else {
-		tickEventPeriodMs = masterConfig.Sys.SystemTickPeriodMillisecond
-	}
-	tickEventMap = map[tickEventSignature]tickEvent{}
-}
-
 func startSystemTicking() {
 	if tickEventPeriodMs == 0 {
 		logger.Error("startSystemTicking(): ticker uninitialized -- call initSystemTicking() or no system ticking otherwise")

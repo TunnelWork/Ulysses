@@ -3,6 +3,8 @@ package conf
 import (
 	"errors"
 
+	"github.com/TunnelWork/Ulysses/src/internal/db"
+	"github.com/TunnelWork/Ulysses/src/internal/logger"
 	"gopkg.in/yaml.v2"
 )
 
@@ -11,9 +13,9 @@ var (
 )
 
 type Config struct {
-	Sys SystemConfig   `yaml:"sys"`
-	Log LoggerConfig   `yaml:"log"`
-	DB  DatabaseConfig `yaml:"db"`
+	Sys SystemConfig        `yaml:"sys"`
+	Log logger.LoggerConfig `yaml:"log"`
+	DB  db.DatabaseConfig   `yaml:"db"`
 }
 
 func LoadUlyssesConfig(content []byte) (Config, error) {

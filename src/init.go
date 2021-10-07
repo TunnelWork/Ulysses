@@ -4,10 +4,12 @@ import (
 	"flag"
 	"fmt"
 	"io/ioutil"
+	"sync"
 
 	"github.com/TunnelWork/Ulysses/src/internal/conf"
 	"github.com/TunnelWork/Ulysses/src/internal/db"
 	"github.com/TunnelWork/Ulysses/src/internal/logger"
+	"github.com/gin-gonic/gin"
 )
 
 var (
@@ -32,7 +34,22 @@ var (
 	noDatabase bool
 	noLogger   bool
 	noTick     bool
+	noApi      bool
 )
+
+func parseArgs() {
+	flag.StringVar(&configPath, "config", "./conf/ulysses.yaml", "Ulysses Configuration File")
+	flag.BoolVar(&noDatabase, "no-db", false, "Not to use database. Thus all DB operations will give error.")
+	flag.BoolVar(&noLogger, "no-log", false, "Not to use logger. Thus logging functions will do literally nothing.")
+	flag.BoolVar(&noTick, "no-tick", false, "Not to use ticker. No system ticking.")
+	flag.BoolVar(&noApi, "no-api", false, "Not to register API endpoints. No gin-gonic/gin ability.")
+	flag.Parse()
+}
+
+func globalInit() {
+	loadConfig()
+	initWaitGroup()
+}
 
 // initLogger() can ONLY be called after loadConfig()
 func initLogger() {
@@ -57,17 +74,32 @@ func initDB() {
 	}
 }
 
-func parseArgs() {
-	flag.StringVar(&configPath, "config", "./conf/ulysses.yaml", "Ulysses Configuration File")
-	flag.BoolVar(&noDatabase, "no-db", false, "Not to use database. Thus all DB operations will give error.")
-	flag.BoolVar(&noLogger, "no-log", false, "Not to use logger. Thus logging functions will do literally nothing.")
-	flag.BoolVar(&noTick, "no-tick", false, "Not to use ticker. No system ticking.")
-	flag.Parse()
+func initSystemTicking() {
+	tickEventMutex = &sync.Mutex{}
+	if masterConfig.Sys.SystemTickPeriodMillisecond == 0 {
+		tickEventPeriodMs = tickEventPeriodMsDefault
+	} else {
+		tickEventPeriodMs = masterConfig.Sys.SystemTickPeriodMillisecond
+	}
+	tickEventMap = map[tickEventSignature]tickEvent{}
 }
 
-func globalInit() {
-	loadConfig()
-	initWaitGroup()
+func initUlyssesServer() {
+	if serverConfMapMutex == nil {
+		serverConfMapMutex = &sync.Mutex{}
+	}
+	serverConfMapDirty = true
+	reloadUlyssesServer()
+
+	registerTickEvent(reloadUlyssesServerSignature, reloadUlyssesServer)
+}
+
+func initApiHandler() {
+	ginRouter = gin.New()
+	ginRouter.Use(gin.LoggerWithWriter(logger.NewCustomWriter("Gin: ", "\n")), gin.Recovery())
+
+	// TODO: Register all system API endpoints from api.go
+
 }
 
 func init() {
@@ -95,6 +127,13 @@ func init() {
 	} else {
 		logger.Warning("initSystemTicking(): --no-tick detected, skipping.")
 	}
+
+	if !noApi {
+		initApiHandler()
+	} else {
+		logger.Warning("initApiHandler(): --no-api detected, skipping.")
+	}
+
 	initUlyssesServer()
 	/*** SYSTEM MODULE INIT END ***/
 }
