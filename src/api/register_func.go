@@ -32,7 +32,7 @@ func RegisterApiEndpoint(method uint, relativePath string, handler *gin.HandlerF
 		packageName = strings.Split(details.Name(), ".")[0]
 	}
 
-	if packageName != "main" {
+	if packageName == "main" {
 		return registerApiEndpoint(method, relativePath, handler)
 	} else {
 		return ErrNotAllowDirectFuncReg

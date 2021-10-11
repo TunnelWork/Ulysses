@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"flag"
 	"fmt"
 	"io/ioutil"
@@ -35,6 +36,9 @@ var (
 	noLogger   bool
 	noTick     bool
 	noApi      bool
+
+	// Config-less shortcuts
+	dbConnect func() (*sql.DB, error)
 )
 
 func parseArgs() {
@@ -70,6 +74,9 @@ func initDB() {
 		logger.Fatal("initDB(): ", err)
 		return
 	} else {
+		dbConnect = func() (*sql.DB, error) {
+			return db.DBConnect(masterConfig.DB)
+		}
 		logger.Info("initDB(): success")
 	}
 }
@@ -96,10 +103,9 @@ func initUlyssesServer() {
 
 func initApiHandler() {
 	ginRouter = gin.New()
-	ginRouter.Use(gin.LoggerWithWriter(logger.NewCustomWriter("Gin: ", "\n")), gin.Recovery())
+	ginRouter.Use(gin.LoggerWithWriter(logger.NewCustomWriter("", "")), gin.Recovery())
 
-	// TODO: Register all system API endpoints from api.go
-
+	registerSystemAPIs()
 }
 
 func init() {

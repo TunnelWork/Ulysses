@@ -9,8 +9,8 @@ import (
 var (
 	mapMutex sync.RWMutex = sync.RWMutex{}
 
-	apiGETMap  map[string]*gin.HandlerFunc
-	apiPOSTMap map[string]*gin.HandlerFunc
+	apiGETMap  map[string]*gin.HandlerFunc = map[string]*gin.HandlerFunc{}
+	apiPOSTMap map[string]*gin.HandlerFunc = map[string]*gin.HandlerFunc{}
 )
 
 func ImportToGinEngine(router *gin.Engine) {

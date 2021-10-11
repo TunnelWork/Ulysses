@@ -8,11 +8,13 @@ import (
 
 func main() {
 	// Initialize Business Logic Here.
+	logger.Debug("In main()")
 	bizLogic()
+	logger.Debug("Set ticking...")
 	startSystemTicking() // start system ticking so everything really starts
 
 	// 10 second to make sure everything is working fine
-	logger.Debug("time.Sleep(): Sleep for 6s.")
+	logger.Debug("time.Sleep(): Sleep for 20s.")
 	time.Sleep(6 * time.Second)
 
 	// TODO: REMOVE
@@ -35,5 +37,5 @@ func main() {
 // bizLogic should start all business logics.
 // e.g., Gin Webserver for APIs
 func bizLogic() {
-
+	startGinRouter()
 }

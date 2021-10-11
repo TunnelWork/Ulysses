@@ -3,6 +3,8 @@ sys:
   api_port: 8900
   # A low ticking period combined with high log level may cause trouble
   sys_tick_per_ms: 500 
+  api_domain: www.example.com
+  api_path: /api/_debug
   
 log:
   verbose: true
@@ -19,3 +21,5 @@ db:
   ca-cert-file: /home/shared/.cert/ca-cert.pem
   client-key-file: /home/ulysses/.cert/key.pem
   client-cert-file: /home/ulysses/.cert/cert.pem
+
+  table_prefix: ulys_

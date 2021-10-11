@@ -14,12 +14,12 @@ type LessContext struct {
 }
 
 // This function should wrap the JSON and StatCode returned from handler, register it
-func RegisterApiEndpointJSON(method uint, relativePath string, handler *HandlerFuncJSON) error {
+func RegisterApiEndpointJSON(method uint, relativePath string, handler HandlerFuncJSON) error {
 	var wrappedHandlerFunc gin.HandlerFunc = func(c *gin.Context) {
 		lc := &LessContext{
 			Request: c.Request,
 		}
-		status, json := (*handler)(lc)
+		status, json := handler(lc)
 		c.JSON(status, json)
 	}
 

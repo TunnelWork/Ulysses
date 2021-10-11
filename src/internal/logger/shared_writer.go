@@ -79,10 +79,10 @@ func (cw *customWriter) Write(p []byte) (n int, err error) {
 		defer loggerWaitGroup.Done()
 	}
 	if verboseLogging {
-		fmt.Print(cw.prefix, " ", fmt.Sprint(p), cw.suffix)
+		fmt.Print(cw.prefix, " ", fmt.Sprint(string(p)), cw.suffix)
 	}
 	if fileLogger != nil {
-		fileLogger.Print(cw.prefix, " ", fmt.Sprint(p), cw.suffix)
+		fileLogger.Print(cw.prefix, fmt.Sprint(string(p)), cw.suffix)
 	}
 	return len(p), nil
 }
