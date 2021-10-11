@@ -15,4 +15,4 @@
 # vendor/
 go.sum
 conf/ulysses.yaml
-alternative.log
+*.log
