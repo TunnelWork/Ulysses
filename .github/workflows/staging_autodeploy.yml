@@ -1,4 +1,4 @@
-name: Go
+name: Staging Autodeploy
 
 on:
   # Autodeploy for all pushes to staging branch. 
