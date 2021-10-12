@@ -26,13 +26,13 @@ import (
 )
 
 // var serverConfigTableCreateQuery = `
-// CREATE TABLE ` + masterConfig.DB.TblPrefix + serverConfigTableName + ` IF NOT EXISTS (
-// 	id INT UNSIGNED NOT NULL AUTO_INCREMENT,
-//	server_type VARCHAR(32) NOT NULL,
-// 	deletion_time BIGINT NOT NULL DEFAULT 0,
-// 	conf_json TEXT NOT NULL,
-// 	PRIMARY KEY (id),
-// )`
+// CREATE TABLE IF NOT EXISTS ulysses.Servers (
+// 	ID INT UNSIGNED NOT NULL AUTO_INCREMENT,
+// 	ServerType VARCHAR(32) NOT NULL,
+// 	DeletionTime BIGINT NOT NULL DEFAULT 0,
+// 	ConfJson TEXT NOT NULL,
+// 	PRIMARY KEY (ID)
+// );`
 
 type pairNameSconf struct {
 	serverTypeName string
@@ -40,7 +40,7 @@ type pairNameSconf struct {
 }
 
 const (
-	serverConfigTableName                           = `servers`
+	serverConfigTableName                           = `Servers`
 	mysqlConnectTimeout                             = 500 * time.Millisecond // If not established within timeout, will fail.
 	reloadUlyssesServerSignature tickEventSignature = 0xFEEDBEEF             // temp, we will come up with better names
 )
@@ -70,7 +70,7 @@ func reloadUlyssesServer() {
 	}
 	defer dbConn.Close()
 
-	stmtFetchServerConf, err := dbConn.Prepare(`SELECT id, server_type, conf_json FROM ` + masterConfig.DB.TblPrefix + serverConfigTableName + ` WHERE deletion_time = 0`)
+	stmtFetchServerConf, err := dbConn.Prepare(`SELECT ID, ServerType, ConfJson FROM ` + masterConfig.DB.TblPrefix + serverConfigTableName + ` WHERE DeletionTime = 0`)
 	if err != nil {
 		logger.Error("reloadUlyssesServer(): cannot prepare statement. error: ", err)
 		return
@@ -102,7 +102,7 @@ func reloadUlyssesServer() {
 
 		err = json.Unmarshal([]byte(serverConfStr), &serverConf)
 		if err != nil {
-			logger.Error("reloadUlyssesServer(): cannot unmarshal conf_json: ", serverConfStr, ". error: ", err)
+			logger.Error("reloadUlyssesServer(): cannot unmarshal ConfJson: ", serverConfStr, ". error: ", err)
 			continue
 		}
 
@@ -135,7 +135,7 @@ func addUlyssesServer(serverTypeName string, serverConf server.Configurables) {
 	}
 	defer dbConn.Close()
 
-	stmtInsertServerConf, err := dbConn.Prepare(`INSERT INTO ` + masterConfig.DB.TblPrefix + serverConfigTableName + ` (server_type, conf_json) VALUES( ?, ? )`)
+	stmtInsertServerConf, err := dbConn.Prepare(`INSERT INTO ` + masterConfig.DB.TblPrefix + serverConfigTableName + ` (ServerType, ConfJson) VALUES( ?, ? )`)
 	if err != nil {
 		logger.Error("addUlyssesServer(): cannot prepare statement. error: ", err)
 		return
@@ -173,7 +173,7 @@ func updateUlyssesServer(id uint, serverTypeName string, serverConf server.Confi
 	}
 	defer dbConn.Close()
 
-	stmtUpdateServerConf, err := dbConn.Prepare(`UPDATE` + masterConfig.DB.TblPrefix + serverConfigTableName + ` SET server_type = ?, conf_json = ? WHERE id = ?`)
+	stmtUpdateServerConf, err := dbConn.Prepare(`UPDATE` + masterConfig.DB.TblPrefix + serverConfigTableName + ` SET ServerType = ?, ConfJson = ? WHERE ID = ?`)
 	if err != nil {
 		logger.Error("addUlyssesServer(): cannot prepare statement. error: ", err)
 		return
@@ -205,7 +205,7 @@ func removeUlyssesServer(id uint, serverTypeName string) {
 	}
 	defer dbConn.Close()
 
-	stmtUpdateServerConf, err := dbConn.Prepare(`DELETE FROM ` + masterConfig.DB.TblPrefix + serverConfigTableName + ` WHERE id = ? AND server_type = ?`)
+	stmtUpdateServerConf, err := dbConn.Prepare(`DELETE FROM ` + masterConfig.DB.TblPrefix + serverConfigTableName + ` WHERE ID = ? AND ServerType = ?`)
 	if err != nil {
 		logger.Error("removeUlyssesServer(): cannot prepare statement. error: ", err)
 		return
