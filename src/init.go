@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"flag"
 	"fmt"
@@ -75,7 +76,9 @@ func initDB() {
 		return
 	} else {
 		dbConnect = func() (*sql.DB, error) {
-			return db.DBConnect(masterConfig.DB)
+			ctx, cancel := context.WithTimeout(context.Background(), mysqlConnectTimeout)
+			defer cancel()
+			return db.DBConnectWithContext(ctx, masterConfig.DB)
 		}
 		logger.Info("initDB(): success")
 	}
