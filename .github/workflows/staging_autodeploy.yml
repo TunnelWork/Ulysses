@@ -1,0 +1,56 @@
+name: Go
+
+on:
+  # Autodeploy for all pushes to staging branch. 
+  push:
+    branches: [ staging ]
+#   pull_request:
+#     branches: [ staging ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Set up Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: 1.17
+
+    - name: Build
+      run: go build -v ./src/...
+
+    - name: Test
+      run: go test -v ./src/...
+  
+  sync:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    
+    - name: rsync file upload
+      uses: burnett01/rsync-deployments@4.1
+      with:
+        switches: -avzur
+        path: src/
+        remote_path: /home/staging/ulysses/src
+        remote_host: ${{ secrets.STAGING_SSH_HOST }}
+        remote_user: ${{ secrets.STAGING_SSH_USERNAME }}
+        remote_key: ${{ secrets.STAGING_SSH_KEY }}
+        
+  deploy:
+    needs: sync
+    runs-on: ubuntu-latest
+    steps:
+    - name: reload service
+      uses: appleboy/ssh-action@v0.1.4
+      with: 
+        host: ${{ secrets.STAGING_SSH_HOST }}
+        username: ${{ secrets.STAGING_SSH_USERNAME }}
+        key: ${{ secrets.STAGING_SSH_KEY }}
+        port: 22
+        script: |
+          sudo systemctl restart ulysses.service
