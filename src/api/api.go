@@ -13,16 +13,29 @@ var (
 	apiPOSTMap map[string]*gin.HandlerFunc = map[string]*gin.HandlerFunc{}
 )
 
-func ImportToGinEngine(router *gin.Engine) {
+func ImportToGinEngine(router *gin.Engine, urlPath string) {
 	mapMutex.RLock()
 	defer mapMutex.RUnlock()
 
+	// Safety measure: trim-off all leading/ending slashes (/)
+	for urlPath[0] == '/' {
+		urlPath = urlPath[1:] // trim off the first character
+	}
+	for urlPath[len(urlPath)-1] == '/' {
+		urlPath = urlPath[:len(urlPath)-1] // trim off the last character
+	}
+
+	// For non empty urlPath, append ending slash to make it a path.
+	if len(urlPath) > 0 {
+		urlPath = urlPath + "/"
+	}
+
 	for path, handler := range apiGETMap {
-		router.GET(path, *handler)
+		router.GET(urlPath+path, *handler)
 	}
 
 	for path, handler := range apiPOSTMap {
-		router.POST(path, *handler)
+		router.POST(urlPath+path, *handler)
 	}
 }
 

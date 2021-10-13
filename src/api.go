@@ -38,5 +38,5 @@ func registerSystemAPIs() {
 		}
 	}
 
-	api.ImportToGinEngine(ginRouter)
+	api.ImportToGinEngine(ginRouter, masterConfig.Sys.UrlPath)
 }
