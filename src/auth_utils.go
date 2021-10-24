@@ -13,8 +13,12 @@ const (
 	userMFATableName  = `user_mfa`
 )
 
+func hasValidAuth(c *gin.Context) bool {
+	return false
+}
+
 func checkMFARegistration(login string, passhash string) (bool, []gin.H) {
-	db, err := dbConnect()
+	db, err := dbConnector.Conn()
 	if err == nil {
 		logger.Error("authLoginPass(): can't connect database. error: ", err)
 		return false, nil
@@ -46,7 +50,7 @@ func _handlerCheckMFA(c *gin.Context) {
 
 // authLoginPass is the real login function which checks with DB
 func authLoginPass(login string, passhash string) (bool, uint) {
-	db, err := dbConnect()
+	db, err := dbConnector.Conn()
 	if err == nil {
 		logger.Error("authLoginPass(): can't connect database. error: ", err)
 		return false, 0
@@ -97,8 +101,8 @@ func _handlerAuth(c *gin.Context) {
 	var authed bool = false
 
 	if authed && !mfaRequired {
-		//						COUNTER  UID      SRC_IP    EXPIRE_AT
-		var authToken string = "DEADBEEF,000000FF,127.0.0.1,2022/10/09 01:02:03"
+		// TODO: Add bearer token here
+		var authToken string = ""
 		// var serverPubKey string                                                              // This PubKey is not ENCRYPTED
 		var userPrivKey string // This PrivKey is ENCRYPTED WITH USER PASSWORD
 

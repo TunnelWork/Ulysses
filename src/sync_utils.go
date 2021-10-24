@@ -18,11 +18,6 @@ var (
 	globalExitChannel chan bool
 )
 
-func initWaitGroup() {
-	globalWaitGroup = sync.WaitGroup{}
-	globalExitChannel = make(chan bool)
-}
-
 // globalExitSignal() should write to the globalExitChannel
 // in order to quit all persistent goroutines, e.g., systemTicking
 // it is very dirty now
