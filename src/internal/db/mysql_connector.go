@@ -1,50 +1,61 @@
 package db
 
 import (
-	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"database/sql"
 	"fmt"
 	"io/ioutil"
+	"time"
 
 	"github.com/go-sql-driver/mysql"
 )
 
-const (
-	mysqlAutoCommit = true
-)
-
-func DBConnected(db *sql.DB) bool {
-	err := db.Ping()
-	if err != nil {
-		db.Close()
-		return false
-	}
-	return true
+// MysqlConnect is a STATELESS struct used to generate new MySQL connections
+type MysqlConnector struct {
+	conf    DatabaseConfig
+	timeout time.Duration // !unimplemented
 }
 
-func DBConnect(sconf DatabaseConfig) (*sql.DB, error) {
+// NewMysqlConnector returns a valid pointer to a
+// MysqlConnector struct when conf is valid (able to
+// establish mysql connections)
+func NewMysqlConnector(conf DatabaseConfig) *MysqlConnector {
+	mysqlConnector := MysqlConnector{
+		conf: conf,
+	}
+
+	conn, err := mysqlConnector.Conn()
+	if err != nil || conn.Ping() != nil {
+		return nil
+	}
+
+	return &mysqlConnector
+}
+
+// Conn() creates the *sql.DB using the DatabaseConfig stored in
+// current MysqlConnector
+func (mc *MysqlConnector) Conn() (*sql.DB, error) {
 	driverName := "mysql"
 	// dsn = fmt.Sprintf("user:password@tcp(localhost:5555)/dbname?tls=skip-verify&autocommit=true")
-	dsn := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?loc=Local", sconf.User, sconf.Passwd, sconf.Host, sconf.Port, sconf.Database)
-	if mysqlAutoCommit {
+	dsn := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?loc=Local", mc.conf.User, mc.conf.Passwd, mc.conf.Host, mc.conf.Port, mc.conf.Database)
+	if mc.conf.MysqlAutoCommit {
 		dsn += "&autocommit=true"
 	}
-	if sconf.CA != "" {
+	if mc.conf.CA != "" {
 		dsn += "&tls=custom"
 		rootCertPool := x509.NewCertPool()
-		pem, err := ioutil.ReadFile(sconf.CA)
+		pem, err := ioutil.ReadFile(mc.conf.CA)
 		if err != nil {
 			return nil, err
 		}
 		if ok := rootCertPool.AppendCertsFromPEM(pem); !ok {
 			return nil, ErrCannotAppendCert
 		}
-		if sconf.ClientKey != "" && sconf.ClientCert != "" {
+		if mc.conf.ClientKey != "" && mc.conf.ClientCert != "" {
 			// Both Key and Cert are set. Go with customer cert.
 			clientCert := make([]tls.Certificate, 0, 1)
-			certs, err := tls.LoadX509KeyPair(sconf.ClientCert, sconf.ClientKey)
+			certs, err := tls.LoadX509KeyPair(mc.conf.ClientCert, mc.conf.ClientKey)
 			if err != nil {
 				return nil, err
 			}
@@ -56,7 +67,7 @@ func DBConnect(sconf DatabaseConfig) (*sql.DB, error) {
 				MinVersion:   tls.VersionTLS12,
 				MaxVersion:   0,
 			})
-		} else if sconf.ClientKey == "" && sconf.ClientCert == "" {
+		} else if mc.conf.ClientKey == "" && mc.conf.ClientCert == "" {
 			// Neither Key or Cert is set. Proceed without customer cert.
 			mysql.RegisterTLSConfig("custom", &tls.Config{
 				// ServerName: "example.com",
@@ -70,33 +81,13 @@ func DBConnect(sconf DatabaseConfig) (*sql.DB, error) {
 		}
 	}
 
-	db, err := sql.Open(driverName, dsn)
+	var db *sql.DB
+	var err error
+	db, err = sql.Open(driverName, dsn)
+
 	if err != nil {
 		return nil, err
 	}
 
-	if connected := DBConnected(db); !connected {
-		return nil, ErrMySQLNoConn
-	}
-
 	return db, nil
-}
-
-func DBConnectWithContext(ctx context.Context, sconf DatabaseConfig) (*sql.DB, error) {
-	var dbConn *sql.DB
-	var err error
-
-	dbDone := make(chan bool)
-
-	go func() {
-		dbConn, err = DBConnect(sconf)
-		dbDone <- true
-	}()
-
-	select {
-	case <-dbDone:
-		return dbConn, err
-	case <-ctx.Done():
-		return dbConn, ctx.Err()
-	}
 }

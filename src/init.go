@@ -1,8 +1,6 @@
 package main
 
 import (
-	"context"
-	"database/sql"
 	"flag"
 	"fmt"
 	"io/ioutil"
@@ -19,18 +17,6 @@ var (
 	masterConfig conf.Config
 )
 
-func loadConfig() {
-	content, err := ioutil.ReadFile(configPath)
-	if err != nil {
-		panic(fmt.Sprintf("loadConfig(): can't read config file located at %s. error: %s", configPath, err))
-	}
-	masterConfig, err = conf.LoadUlyssesConfig(content)
-
-	if err != nil {
-		panic(fmt.Sprintf("loadConfig(): config file at %s is opened but can't be recognized. error: %s", configPath, err))
-	}
-}
-
 var (
 	// Debug Switches
 	noDatabase bool
@@ -38,8 +24,8 @@ var (
 	noTick     bool
 	noApi      bool
 
-	// Config-less shortcuts
-	dbConnect func() (*sql.DB, error)
+	// Global Shared Objects
+	dbConnector *db.MysqlConnector
 )
 
 func parseArgs() {
@@ -51,9 +37,63 @@ func parseArgs() {
 	flag.Parse()
 }
 
+func init() {
+	/*** GLOBAL INIT BEGIN ***/
+	parseArgs()
+	globalInit()
+	/*** GLOBAL INIT END ***/
+
+	// initUlyssesServer()
+
+}
+
 func globalInit() {
-	loadConfig()
+	/*** Sync ***/
 	initWaitGroup()
+
+	/*** Internal module ***/
+	initConfig()
+
+	if !noLogger {
+		initLogger()
+	} else {
+		fmt.Println("initLogger(): --no-log detected, skipping. What Age is this, Dark Age?")
+	}
+	if !noDatabase {
+		initDB()
+	} else {
+		logger.Warning("initDB(): --no-db detected, skipping.")
+	}
+
+	/*** System module ***/
+	if !noTick {
+		initSystemTicking()
+	} else {
+		logger.Warning("initSystemTicking(): --no-tick detected, skipping.")
+	}
+
+	if !noApi {
+		initApiHandler()
+	} else {
+		logger.Warning("initApiHandler(): --no-api detected, skipping.")
+	}
+}
+
+func initWaitGroup() {
+	globalWaitGroup = sync.WaitGroup{}
+	globalExitChannel = make(chan bool)
+}
+
+func initConfig() {
+	content, err := ioutil.ReadFile(configPath)
+	if err != nil {
+		panic(fmt.Sprintf("loadConfig(): can't read config file located at %s. error: %s", configPath, err))
+	}
+	masterConfig, err = conf.LoadUlyssesConfig(content)
+
+	if err != nil {
+		panic(fmt.Sprintf("loadConfig(): config file at %s is opened but can't be recognized. error: %s", configPath, err))
+	}
 }
 
 // initLogger() can ONLY be called after loadConfig()
@@ -70,16 +110,11 @@ func initLogger() {
 // initDB() SHOULD be called after initLogger()
 func initDB() {
 	// DB Conn Livess Test, block until fail. No timeout.
-	_, err := db.DBConnect(masterConfig.DB)
-	if err != nil {
-		logger.Fatal("initDB(): ", err)
+	dbConnector = db.NewMysqlConnector(masterConfig.DB)
+	if dbConnector == nil {
+		logger.Fatal("initDB(): cannot establish database connection")
 		return
 	} else {
-		dbConnect = func() (*sql.DB, error) {
-			ctx, cancel := context.WithTimeout(context.Background(), mysqlConnectTimeout)
-			defer cancel()
-			return db.DBConnectWithContext(ctx, masterConfig.DB)
-		}
 		logger.Info("initDB(): success")
 	}
 }
@@ -94,55 +129,19 @@ func initSystemTicking() {
 	tickEventMap = map[tickEventSignature]tickEvent{}
 }
 
-func initUlyssesServer() {
-	if serverConfMapMutex == nil {
-		serverConfMapMutex = &sync.Mutex{}
-	}
-	serverConfMapDirty = true
-	reloadUlyssesServer()
+// func initUlyssesServer() {
+// 	if serverConfMapMutex == nil {
+// 		serverConfMapMutex = &sync.Mutex{}
+// 	}
+// 	serverConfMapDirty = true
+// 	reloadUlyssesServer()
 
-	registerTickEvent(reloadUlyssesServerSignature, reloadUlyssesServer)
-}
+// 	registerTickEvent(reloadUlyssesServerSignature, reloadUlyssesServer)
+// }
 
 func initApiHandler() {
 	ginRouter = gin.New()
 	ginRouter.Use(gin.LoggerWithWriter(logger.NewCustomWriter("", "")), gin.Recovery())
 
 	registerSystemAPIs()
-}
-
-func init() {
-	/*** GLOBAL INIT BEGIN ***/
-	parseArgs()
-	globalInit()
-	/*** GLOBAL INIT END ***/
-
-	/*** INTERNAL MODULE INIT BEGIN ***/
-	if !noLogger {
-		initLogger()
-	} else {
-		fmt.Println("initLogger(): --no-log detected, skipping. What Age is this, Dark Age?")
-	}
-	if !noDatabase {
-		initDB()
-	} else {
-		logger.Warning("initDB(): --no-db detected, skipping.")
-	}
-	/*** INTERNAL MODULE INIT END ***/
-
-	/*** SYSTEM MODULE INIT BEGIN ***/
-	if !noTick {
-		initSystemTicking() // First one!
-	} else {
-		logger.Warning("initSystemTicking(): --no-tick detected, skipping.")
-	}
-
-	if !noApi {
-		initApiHandler()
-	} else {
-		logger.Warning("initApiHandler(): --no-api detected, skipping.")
-	}
-
-	initUlyssesServer()
-	/*** SYSTEM MODULE INIT END ***/
 }

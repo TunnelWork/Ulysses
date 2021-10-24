@@ -15,9 +15,15 @@ var (
 
 	mapSystemApiGetHandlers = map[string](*gin.HandlerFunc){}
 
+	mapDebugPost = map[string](*gin.HandlerFunc){
+		"debug/SM": &handlerDebugSM,
+	}
+	mapDebugGet = map[string](*gin.HandlerFunc){}
+
 	// MUST CREATE FUNCTION VARIABLE AS POINTER
 	handlerCheckMFA gin.HandlerFunc = _handlerCheckMFA
 	handlerAuth     gin.HandlerFunc = _handlerAuth
+	handlerDebugSM  gin.HandlerFunc = _debugHandlerServerManager
 )
 
 // registerSystemAPIs() is just an additional step to prevent API endpoints confliction.
@@ -35,6 +41,20 @@ func registerSystemAPIs() {
 		api.RegisterApiEndpoint(api.HTTP_METHOD_GET, route, handler)
 		if err != nil {
 			logger.Fatal("registerSystemAPIs(): Cannot register GET route", route, " due to error: ", err)
+		}
+	}
+
+	for route, handler := range mapDebugGet {
+		err = api.RegisterApiEndpoint(api.HTTP_METHOD_GET, route, handler)
+		if err != nil {
+			logger.Fatal("registerSystemAPIs(): Cannot register POST route", route, " due to error: ", err)
+		}
+	}
+
+	for route, handler := range mapDebugPost {
+		err = api.RegisterApiEndpoint(api.HTTP_METHOD_POST, route, handler)
+		if err != nil {
+			logger.Fatal("registerSystemAPIs(): Cannot register POST route", route, " due to error: ", err)
 		}
 	}
 

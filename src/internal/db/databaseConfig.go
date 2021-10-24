@@ -13,6 +13,9 @@ type DatabaseConfig struct {
 	ClientKey  string `yaml:"client_key"`  // Required by ClientCert
 	ClientCert string `yaml:"client_cert"` // Required by ClientKey
 
+	// Other MySQL Info
+	MysqlAutoCommit bool `yaml:"auto_commit"`
+
 	// Table Prefix
 	TblPrefix string `yaml:"table_prefix"` // If unset, use default: "ulys_".
 }
