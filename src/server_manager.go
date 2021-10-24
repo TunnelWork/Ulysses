@@ -117,7 +117,7 @@ func (sm *ServerManager) Update(id uint, serverType string, confJson server.Conf
 	}
 	defer dbConn.Close()
 
-	stmtUpdateServerConf, err := dbConn.Prepare(`UPDATE` + masterConfig.DB.TblPrefix + serverConfigTableName + ` SET ServerType = ?, ConfJson = ?, LastUpdate = ? WHERE ID = ? AND DeletionTime = 0`)
+	stmtUpdateServerConf, err := dbConn.Prepare(`UPDATE ` + masterConfig.DB.TblPrefix + serverConfigTableName + ` SET ServerType = ?, ConfJson = ?, LastUpdate = ? WHERE ID = ? AND DeletionTime = 0`)
 	if err != nil {
 		logger.Error("*ServerManager.Add(): cannot prepare statement. error: ", err)
 		return err
@@ -141,7 +141,7 @@ func (sm *ServerManager) Delete(id uint) error {
 	}
 	defer dbConn.Close()
 
-	stmtDeleteServerConf, err := dbConn.Prepare(`UPDATE` + masterConfig.DB.TblPrefix + serverConfigTableName + ` SET LastUpdate = ?, DeletionTime = ? WHERE ID = ? AND DeletionTime = 0`)
+	stmtDeleteServerConf, err := dbConn.Prepare(`UPDATE ` + masterConfig.DB.TblPrefix + serverConfigTableName + ` SET LastUpdate = ?, DeletionTime = ? WHERE ID = ? AND DeletionTime = 0`)
 	if err != nil {
 		return err
 	}
@@ -164,7 +164,7 @@ func (sm *ServerManager) Disable(id uint) error {
 	}
 	defer dbConn.Close()
 
-	stmtDisableServerConf, err := dbConn.Prepare(`UPDATE` + masterConfig.DB.TblPrefix + serverConfigTableName + ` SET LastUpdate = ?, Disabled = 1 WHERE ID = ? AND Disabled = 0 AND DeletionTime = 0`)
+	stmtDisableServerConf, err := dbConn.Prepare(`UPDATE ` + masterConfig.DB.TblPrefix + serverConfigTableName + ` SET LastUpdate = ?, Disabled = 1 WHERE ID = ? AND Disabled = 0 AND DeletionTime = 0`)
 	if err != nil {
 		return err
 	}
@@ -186,7 +186,7 @@ func (sm *ServerManager) Enable(id uint) error {
 	}
 	defer dbConn.Close()
 
-	stmtDisableServerConf, err := dbConn.Prepare(`UPDATE` + masterConfig.DB.TblPrefix + serverConfigTableName + ` SET LastUpdate = ?, Disabled = 0 WHERE ID = ? AND Disabled = 1 AND DeletionTime = 0`)
+	stmtDisableServerConf, err := dbConn.Prepare(`UPDATE ` + masterConfig.DB.TblPrefix + serverConfigTableName + ` SET LastUpdate = ?, Disabled = 0 WHERE ID = ? AND Disabled = 1 AND DeletionTime = 0`)
 	if err != nil {
 		return err
 	}
