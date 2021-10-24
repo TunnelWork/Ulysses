@@ -89,7 +89,7 @@ func (sm *ServerManager) Lookup(id uint) (serverType string, confJson server.Con
 	var confJsonStr string
 
 	err = stmtLookupServerConf.QueryRow(id).Scan(&serverType, &confJsonStr)
-	if err == nil {
+	if err != nil {
 		// if err != sql.ErrNoRows { // Expect to see ErrNoRows a lot. Not even an error.
 		// 	logger.Error("*ServerManager.Lookup(): can't query or scan. error: ", err)
 		// } else {
