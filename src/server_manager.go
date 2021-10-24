@@ -53,7 +53,7 @@ func (sm *ServerManager) Add(serverType string, confJson server.Configurables) (
 	}
 	defer stmtInsertServerConf.Close()
 
-	result, err := stmtInsertServerConf.Exec(serverType, string(serverConfBytes), time.Now())
+	result, err := stmtInsertServerConf.Exec(serverType, string(serverConfBytes), time.Now().Unix())
 	if err != nil {
 		// logger.Error("*ServerManager.Add(): cannot execute prepared statement. error: ", err)
 		return id, err
@@ -124,7 +124,7 @@ func (sm *ServerManager) Update(id uint, serverType string, confJson server.Conf
 	}
 	defer stmtUpdateServerConf.Close()
 
-	_, err = stmtUpdateServerConf.Exec(serverType, string(serverConfBytes), time.Now(), id)
+	_, err = stmtUpdateServerConf.Exec(serverType, string(serverConfBytes), time.Now().Unix(), id)
 	if err != nil {
 		logger.Error("*ServerManager.Update(): cannot execute prepared statement, error: ", err)
 		return err
@@ -147,7 +147,7 @@ func (sm *ServerManager) Delete(id uint) error {
 	}
 	defer stmtDeleteServerConf.Close()
 
-	deletionTime := time.Now()
+	deletionTime := time.Now().Unix()
 	_, err = stmtDeleteServerConf.Exec(deletionTime, deletionTime, id)
 	if err != nil {
 		return err
@@ -170,7 +170,7 @@ func (sm *ServerManager) Disable(id uint) error {
 	}
 	defer stmtDisableServerConf.Close()
 
-	_, err = stmtDisableServerConf.Exec(time.Now(), id)
+	_, err = stmtDisableServerConf.Exec(time.Now().Unix(), id)
 	if err != nil {
 		return err
 	}
@@ -192,7 +192,7 @@ func (sm *ServerManager) Enable(id uint) error {
 	}
 	defer stmtDisableServerConf.Close()
 
-	_, err = stmtDisableServerConf.Exec(time.Now(), 1, id)
+	_, err = stmtDisableServerConf.Exec(time.Now().Unix(), 1, id)
 	if err != nil {
 		return err
 	}
