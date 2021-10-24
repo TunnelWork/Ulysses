@@ -192,7 +192,7 @@ func (sm *ServerManager) Enable(id uint) error {
 	}
 	defer stmtDisableServerConf.Close()
 
-	_, err = stmtDisableServerConf.Exec(time.Now().Unix(), 1, id)
+	_, err = stmtDisableServerConf.Exec(time.Now().Unix(), id)
 	if err != nil {
 		return err
 	}
