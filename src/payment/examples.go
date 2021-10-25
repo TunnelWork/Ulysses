@@ -163,7 +163,7 @@ var (
 
 	ExampleOrderRefundParams P = P{
 		"OrderID": "0xDEADC0DE",
-		"Amount": P{
+		"Amount": P{ // If not set, refund all
 			"Value":    "0.69",
 			"Currency": "USD",
 		},

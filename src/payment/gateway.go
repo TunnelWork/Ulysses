@@ -34,12 +34,12 @@ type Gateway interface {
 	// Admin/Customer
 	LookupOrder(db *sql.DB, ReferenceID string) (orderDetails P, err error)
 
-	// Admin(payee)-only, should be saved when the order is created
+	// Admin(payee)-only, should be provided from database.
 	OrderDetail(db *sql.DB, orderID string) (orderDetails P, err error)
 
 	// For Admin(payee)/Customer(payer), should be fetched from remote API
 	// everytime gets requested
-	OrderStatus(db *sql.DB, orderID string) (orderStatus P, err error)
+	CheckOrderStatus(db *sql.DB, orderID string) (orderStatus P, err error)
 
 	//
 	GenerateOrderForm(db *sql.DB, orderID string) (orderFormTemplate P, err error)
@@ -69,4 +69,13 @@ type GatewayRefundable interface {
 
 	// Refund() the orderID in full or partial, depending on the params
 	Refund(db *sql.DB, orderRefundParams P) error
+}
+
+type GatewayBillable interface {
+	Gateway
+
+	// Bill() positively collect payment from a user
+	// based on a pre-approved agreement.
+	// the amount charged might be limited or not.
+	Bill(db *sql.DB, uid uint, orderCreationParams P) (orderStatus P, err error)
 }
