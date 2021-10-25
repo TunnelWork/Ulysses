@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/TunnelWork/Ulysses/src/api"
+	"github.com/TunnelWork/Ulysses.Lib/api"
 	"github.com/TunnelWork/Ulysses/src/internal/logger"
 	"github.com/gin-gonic/gin"
 )

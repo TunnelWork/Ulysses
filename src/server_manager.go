@@ -6,9 +6,9 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/TunnelWork/Ulysses.Lib/server"
 	"github.com/TunnelWork/Ulysses/src/internal/db"
 	"github.com/TunnelWork/Ulysses/src/internal/logger"
-	"github.com/TunnelWork/Ulysses/src/server"
 	"github.com/gin-gonic/gin"
 )
 
