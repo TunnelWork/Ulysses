@@ -11,15 +11,20 @@ func main() {
 	logger.Debug("Set ticking...")
 	startSystemTicking() // start system ticking so everything really starts
 
-	select {}
+	// Block until...
+	select {
+	// Internal Exiting Signal, or...
+	case <-globalExitChannel:
+		logger.Warning("main(): received on globalExitChannel. Maybe globalExitSignal() is called? Executing shutting down procedure. ")
+	// External Exiting Signal
+	case <-sysSig:
+		logger.Warning("main(): SIGINT/SIGTERM received. Executing shutting down procedure. ")
+	}
 
-	// Tired? Let's get out of here
-	// logger.Debug("globalExitSignal(): Now signal for exiting.")
-	// globalExitSignal()
-	// globalWaitGroup.Wait()
+	globalExitSignal() // globalExitChannel <- true
+	globalWaitGroup.Wait()
 
-	// // Good Night
-	// logger.LastWord("main(): Gute Nacht.") // Any last words? LOL
+	logger.LastWord("main(): Gute Nacht.") // Any last words? LOL
 }
 
 // bizLogic should start all business logics.

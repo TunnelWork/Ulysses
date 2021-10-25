@@ -4,7 +4,10 @@ import (
 	"flag"
 	"fmt"
 	"io/ioutil"
+	"os"
+	"os/signal"
 	"sync"
+	"syscall"
 
 	"github.com/TunnelWork/Ulysses/src/internal/conf"
 	"github.com/TunnelWork/Ulysses/src/internal/db"
@@ -23,6 +26,9 @@ var (
 	noLogger   bool
 	noTick     bool
 	noApi      bool
+
+	// SysSignal Channel
+	sysSig chan os.Signal = make(chan os.Signal, 1)
 
 	// Global Shared Objects
 	dbConnector *db.MysqlConnector
@@ -53,6 +59,7 @@ func globalInit() {
 
 	/*** Internal module ***/
 	initConfig()
+	initSignalCatcher()
 
 	if !noLogger {
 		initLogger()
@@ -144,4 +151,8 @@ func initApiHandler() {
 	ginRouter.Use(gin.LoggerWithWriter(logger.NewCustomWriter("", "")), gin.Recovery())
 
 	registerSystemAPIs()
+}
+
+func initSignalCatcher() {
+	signal.Notify(sysSig, syscall.SIGTERM, syscall.SIGINT)
 }
