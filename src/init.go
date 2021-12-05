@@ -1,158 +1,130 @@
 package main
 
 import (
+	"crypto/ed25519"
 	"flag"
-	"fmt"
-	"io/ioutil"
-	"os"
 	"os/signal"
 	"sync"
 	"syscall"
 
-	"github.com/TunnelWork/Ulysses/src/internal/conf"
-	"github.com/TunnelWork/Ulysses/src/internal/db"
-	"github.com/TunnelWork/Ulysses/src/internal/logger"
-	"github.com/gin-gonic/gin"
+	themis "github.com/TunnelWork/Themis"
+	"github.com/TunnelWork/Ulysses.Lib/api"
+	"github.com/TunnelWork/Ulysses.Lib/auth"
+	utotp "github.com/TunnelWork/Ulysses.Lib/auth/mfa/totp"
+	uwebauthn "github.com/TunnelWork/Ulysses.Lib/auth/mfa/webauthn"
+	"github.com/TunnelWork/Ulysses.Lib/billing"
+	"github.com/TunnelWork/Ulysses.Lib/logging"
+	"github.com/TunnelWork/Ulysses.Lib/payment"
+	"github.com/TunnelWork/Ulysses.Lib/security"
+	uconf "github.com/TunnelWork/Ulysses/src/internal/conf"
+	"github.com/TunnelWork/Ulysses/src/internal/utils"
+	"github.com/robfig/cron/v3"
+
+	_ "github.com/TunnelWork/payment.PayPal"
+	_ "github.com/TunnelWork/server.Trojan"
 )
 
-var (
-	configPath   string
-	masterConfig conf.Config
-)
-
-var (
-	// Debug Switches
-	noDatabase bool
-	noLogger   bool
-	noTick     bool
-	noApi      bool
-
-	// SysSignal Channel
-	sysSig chan os.Signal = make(chan os.Signal, 1)
-
-	// Global Shared Objects
-	dbConnector *db.MysqlConnector
-)
+func init() {
+	parseArgs()
+	globalInit()
+}
 
 func parseArgs() {
-	flag.StringVar(&configPath, "config", "./conf/ulysses.yaml", "Ulysses Configuration File")
-	flag.BoolVar(&noDatabase, "no-db", false, "Not to use database. Thus all DB operations will give error.")
-	flag.BoolVar(&noLogger, "no-log", false, "Not to use logger. Thus logging functions will do literally nothing.")
-	flag.BoolVar(&noTick, "no-tick", false, "Not to use ticker. No system ticking.")
-	flag.BoolVar(&noApi, "no-api", false, "Not to register API endpoints. No gin-gonic/gin ability.")
+	flag.StringVar(&ulyssesConfigPath, "config", "./conf/ulysses.yaml", "Ulysses Database Configuration File")
 	flag.Parse()
 }
 
-func init() {
-	/*** GLOBAL INIT BEGIN ***/
-	parseArgs()
-	globalInit()
-	/*** GLOBAL INIT END ***/
-
-	// initUlyssesServer()
-
-}
-
 func globalInit() {
-	/*** Sync ***/
-	initWaitGroup()
-
-	/*** Internal module ***/
-	initConfig()
-	initSignalCatcher()
-
-	if !noLogger {
-		initLogger()
-	} else {
-		fmt.Println("initLogger(): --no-log detected, skipping. What Age is this, Dark Age?")
-	}
-	if !noDatabase {
-		initDB()
-	} else {
-		logger.Warning("initDB(): --no-db detected, skipping.")
-	}
-
-	/*** System module ***/
-	if !noTick {
-		initSystemTicking()
-	} else {
-		logger.Warning("initSystemTicking(): --no-tick detected, skipping.")
-	}
-
-	if !noApi {
-		initApiHandler()
-	} else {
-		logger.Warning("initApiHandler(): --no-api detected, skipping.")
-	}
-}
-
-func initWaitGroup() {
-	globalWaitGroup = sync.WaitGroup{}
+	var err error
+	/*** Low-level Functionalities ***/
+	masterWaitGroup = sync.WaitGroup{}
+	slaveWaitGroup = sync.WaitGroup{}
 	globalExitChannel = make(chan bool)
-}
+	signal.Notify(sysSig, syscall.SIGTERM, syscall.SIGINT)
 
-func initConfig() {
-	content, err := ioutil.ReadFile(configPath)
+	/*** Configuration ***/
+	ulyssesConfigFile, err = uconf.LoadConfigFromFile(ulyssesConfigPath)
 	if err != nil {
-		panic(fmt.Sprintf("loadConfig(): can't read config file located at %s. error: %s", configPath, err))
+		panic(err)
 	}
-	masterConfig, err = conf.LoadUlyssesConfig(content)
-
+	completeConfig, err = ulyssesConfigFile.LoadCompleteConfig()
 	if err != nil {
-		panic(fmt.Sprintf("loadConfig(): config file at %s is opened but can't be recognized. error: %s", configPath, err))
+		panic(err)
 	}
-}
+	dbPool, err = completeConfig.Mysql.DB()
+	if err != nil {
+		panic(err)
+	}
 
-// initLogger() can ONLY be called after loadConfig()
-func initLogger() {
-	// if err := logger.Init(masterConfig.Log); err != nil {
-	var exitFunc func() = globalExitSignal
-	if err := logger.InitWithWaitGroupAndExitingFunc(&globalWaitGroup, &exitFunc, masterConfig.Log); err != nil {
+	/*** Logger ***/
+	if err := logging.InitWithWaitGroupAndExitingFunc(&masterWaitGroup, nil, completeConfig.Logger); err != nil {
 		panic(err)
 	} else {
-		logger.Info("initLogger(): success")
+		logging.Info("initLogger(): success")
 	}
-}
 
-// initDB() SHOULD be called after initLogger()
-func initDB() {
-	// DB Conn Livess Test, block until fail. No timeout.
-	dbConnector = db.NewMysqlConnector(masterConfig.DB)
-	if dbConnector == nil {
-		logger.Fatal("initDB(): cannot establish database connection")
-		return
-	} else {
-		logger.Info("initDB(): success")
+	/*** Cron ***/
+	crontab = cron.New()
+	// // Everyday at midnight
+	// crontab.AddFunc("0 0 0 * * *", func() {
+	// 	errs := billing.DailyRecurringBilling()
+	// 	if len(errs) > 0 {
+	// 		for _, err := range errs {
+	// 			logging.Error(err)
+	// 		}
+	// 	}
+	// })
+	// // Every hour
+	// crontab.AddFunc("0 0 * * * *", func() {
+	// 	errs := billing.HourlyUsageBilling()
+	// 	if len(errs) > 0 {
+	// 		for _, err := range errs {
+	// 			logging.Error(err)
+	// 		}
+	// 	}
+	// })
+	// // Every hour
+	// crontab.AddFunc("0 0 * * * *", func() {
+	// 	errs := billing.HourlyProductTermination()
+	// 	if len(errs) > 0 {
+	// 		for _, err := range errs {
+	// 			logging.Error(err)
+	// 		}
+	// 	}
+	// })
+
+	/*** Rest of the Ulysses.Lib ***/
+	auth.Setup(dbPool, completeConfig.Mysql.TblPrefix)
+	billing.Setup(dbPool, completeConfig.Mysql.TblPrefix)
+	payment.Setup(dbPool, completeConfig.Mysql.TblPrefix) // TODO
+	security.SetupCipher(completeConfig.Security.Cipher())
+
+	/*** Non-Volatile Plugins ***/
+	totp := utotp.NewTOTP(map[string]string{
+		"issuer": "Ulysses",
+	})
+	webauthn := uwebauthn.NewWebAuthn(map[string]string{
+		"RPDisplayName": "Ulysses",
+		"RPID":          completeConfig.Http.URLDomain,
+		"RPOriginURL":   completeConfig.Http.URLComplete,
+	})
+	auth.RegMFAInstance("utotp", totp)
+	auth.RegMFAInstance("uwebauthn", webauthn)
+
+	utils.TokenRevoker = themis.NewOfflineRevoker()
+	utils.TokenPrivKey = completeConfig.Security.Ed25519Key()
+	utils.TokenPubKey = utils.TokenPrivKey.Public().(ed25519.PublicKey)
+
+	/*** API ***/
+	err = registerAPIEndpoints()
+	if err != nil {
+		panic(err)
 	}
-}
 
-func initSystemTicking() {
-	tickEventMutex = &sync.Mutex{}
-	if masterConfig.Sys.SystemTickPeriodMillisecond == 0 {
-		tickEventPeriodMs = tickEventPeriodMsDefault
-	} else {
-		tickEventPeriodMs = masterConfig.Sys.SystemTickPeriodMillisecond
-	}
-	tickEventMap = map[tickEventSignature]tickEvent{}
-}
+	api.FinalizeGinEngine(ginRouter, completeConfig.Http.URLPrefix)
+	ginRouter.HandleMethodNotAllowed = true
+	ginRouter.RedirectTrailingSlash = true
+	ginRouter.RedirectFixedPath = true
 
-// func initUlyssesServer() {
-// 	if serverConfMapMutex == nil {
-// 		serverConfMapMutex = &sync.Mutex{}
-// 	}
-// 	serverConfMapDirty = true
-// 	reloadUlyssesServer()
-
-// 	registerTickEvent(reloadUlyssesServerSignature, reloadUlyssesServer)
-// }
-
-func initApiHandler() {
-	ginRouter = gin.New()
-	ginRouter.Use(gin.LoggerWithWriter(logger.NewCustomWriter("", "")), gin.Recovery())
-
-	registerSystemAPIs()
-}
-
-func initSignalCatcher() {
-	signal.Notify(sysSig, syscall.SIGTERM, syscall.SIGINT)
+	// TODO: Set XFF trusted proxies
 }

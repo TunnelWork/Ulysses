@@ -2,61 +2,58 @@ package main
 
 import (
 	"github.com/TunnelWork/Ulysses.Lib/api"
-	"github.com/TunnelWork/Ulysses/src/internal/logger"
 	"github.com/gin-gonic/gin"
 )
 
+type handler = gin.HandlerFunc
+
 var (
-	// MUST REGISTER ALL FUNCTION HERE
-	mapSystemApiPostHandlers = map[string](*gin.HandlerFunc){
-		"MFA":  &handlerCheckMFA,
-		"Auth": &handlerAuth,
+	GETAuth map[string][]*handler = map[string][]*handler{
+		"affiliation": {
+			&AuthorizationMustBeValid,
+			&GETAuthAffiliation,
+		},
+		"mfa": {
+			&AuthorizationMustBeValid,
+			&GETAuthMFA,
+		},
+		"user": {
+			&AuthorizationMustBeValid,
+			&GETAuthUser,
+		},
 	}
-
-	mapSystemApiGetHandlers = map[string](*gin.HandlerFunc){}
-
-	mapDebugPost = map[string](*gin.HandlerFunc){
-		"debug/SM": &handlerDebugSM,
+	POSTAuth map[string][]*handler = map[string][]*handler{
+		"affiliation": {
+			&AuthorizationMustBeValid,
+			&POSTAuthAffiliation,
+		},
+		"mfa": {
+			&AuthorizationMustBeValid,
+			&POSTAuthMFA,
+		},
+		"user": {
+			&AuthorizationMustBeValidIfExists,
+			&POSTAuthUser,
+		},
 	}
-	mapDebugGet = map[string](*gin.HandlerFunc){}
-
-	// MUST CREATE FUNCTION VARIABLE AS POINTER
-	handlerCheckMFA gin.HandlerFunc = _handlerCheckMFA
-	handlerAuth     gin.HandlerFunc = _handlerAuth
-	handlerDebugSM  gin.HandlerFunc = _debugHandlerServerManager
 )
 
-// registerSystemAPIs() is just an additional step to prevent API endpoints confliction.
-// it reuse the register route a third-party module will use.
-func registerSystemAPIs() {
+// When checkpoint/endpoint fails, it always respond with api.MessageResponse
+// When checkpoint/endpoint success, it may respond with api.MessageResponse or api.PayloadResponse
+func registerAPIEndpoints() error {
 	var err error
-	for route, handler := range mapSystemApiPostHandlers {
-		err = api.RegisterApiEndpoint(api.HTTP_METHOD_POST, route, handler)
+	// Auth
+	for endpoint, handlers := range GETAuth {
+		err = api.CGET(api.Auth, endpoint, handlers...)
 		if err != nil {
-			logger.Fatal("registerSystemAPIs(): Cannot register POST route", route, " due to error: ", err)
+			return err
 		}
 	}
-
-	for route, handler := range mapSystemApiGetHandlers {
-		api.RegisterApiEndpoint(api.HTTP_METHOD_GET, route, handler)
+	for endpoint, handlers := range POSTAuth {
+		err = api.CPOST(api.Auth, endpoint, handlers...)
 		if err != nil {
-			logger.Fatal("registerSystemAPIs(): Cannot register GET route", route, " due to error: ", err)
+			return err
 		}
 	}
-
-	for route, handler := range mapDebugGet {
-		err = api.RegisterApiEndpoint(api.HTTP_METHOD_GET, route, handler)
-		if err != nil {
-			logger.Fatal("registerSystemAPIs(): Cannot register POST route", route, " due to error: ", err)
-		}
-	}
-
-	for route, handler := range mapDebugPost {
-		err = api.RegisterApiEndpoint(api.HTTP_METHOD_POST, route, handler)
-		if err != nil {
-			logger.Fatal("registerSystemAPIs(): Cannot register POST route", route, " due to error: ", err)
-		}
-	}
-
-	api.ImportToGinEngine(ginRouter, masterConfig.Sys.UrlPath)
+	return nil
 }

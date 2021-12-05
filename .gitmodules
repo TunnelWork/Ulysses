@@ -1,3 +1,0 @@
-[submodule "src/server/trojan"]
-	path = src/server/trojan
-	url = https://github.com/TunnelWork/Ulysses.Trojan

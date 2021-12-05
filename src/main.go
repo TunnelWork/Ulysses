@@ -1,34 +1,35 @@
 package main
 
 import (
-	"github.com/TunnelWork/Ulysses/src/internal/logger"
+	"fmt"
+
+	"github.com/TunnelWork/Ulysses.Lib/logging"
 )
 
 func main() {
-	// Initialize Business Logic Here.
-	logger.Debug("In main()")
+	// // Initialize Business Logic Here.
+	// logger.Debug("In main()")
 	bizLogic()
-	logger.Debug("Set ticking...")
-	startSystemTicking() // start system ticking so everything really starts
 
 	// Block until...
 	select {
-	// Internal Exiting Signal, or...
-	case <-globalExitChannel:
-		logger.Warning("main(): received on globalExitChannel. Maybe globalExitSignal() is called? Executing shutting down procedure. ")
 	// External Exiting Signal
 	case <-sysSig:
-		logger.Warning("main(): SIGINT/SIGTERM received. Executing shutting down procedure. ")
+		logging.Warning("main(): SIGINT/SIGTERM received. Executing shutting down procedure. ")
+	// Internal
+	case <-globalExitChannel:
+		logging.Warning("main(): readings on globalExitChannel. Executing shutting down procedure. ")
 	}
 
-	globalExitSignal() // globalExitChannel <- true
-	globalWaitGroup.Wait()
+	masterBlock() // Prevent new goroutines from starting
+	masterWait()  // Wait until all goroutines are done
 
-	logger.LastWord("main(): Gute Nacht.") // Any last words? LOL
+	logging.LastWord("main(): Gute Nacht.") // Any last words? LOL
 }
 
-// bizLogic should start all business logics.
+// bizLogic should start all business logics NON-BLOCKING
 // e.g., Gin Webserver for APIs
 func bizLogic() {
-	go startGinRouter()
+	go ginRouter.Run(fmt.Sprintf("%s:%d", completeConfig.Http.HTTPHost, completeConfig.Http.HTTPPort))
+	crontab.Start()
 }
