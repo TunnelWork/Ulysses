@@ -16,7 +16,7 @@ import (
 	"github.com/TunnelWork/Ulysses.Lib/logging"
 	"github.com/TunnelWork/Ulysses.Lib/payment"
 	"github.com/TunnelWork/Ulysses.Lib/security"
-	uconf "github.com/TunnelWork/Ulysses/src/internal/conf"
+	"github.com/TunnelWork/Ulysses/src/internal/uconf"
 	"github.com/TunnelWork/Ulysses/src/internal/utils"
 	"github.com/robfig/cron/v3"
 

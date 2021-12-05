@@ -5,7 +5,7 @@ import (
 	"os"
 	"sync"
 
-	uconf "github.com/TunnelWork/Ulysses/src/internal/conf"
+	"github.com/TunnelWork/Ulysses/src/internal/uconf"
 	"github.com/gin-gonic/gin"
 	"github.com/robfig/cron/v3"
 )
