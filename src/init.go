@@ -113,7 +113,7 @@ func globalInit() {
 	auth.RegMFAInstance("utotp", totp)
 	auth.RegMFAInstance("uwebauthn", webauthn)
 	// Payment
-	if paypalPrepaidConfig, err := paypal.LoadPrepaidConfig(dbPool, completeConfig.Mysql.TblPrefix, "paypal_prepaid_wallet_deposit"); err != nil {
+	if paypalPrepaidConfig, err := paypal.LoadPrepaidConfig(dbPool, completeConfig.Mysql.TblPrefix, "paypal_wallet"); err != nil {
 		logging.Fatal("cannot load config for paypal prepaid gateway, error: ", err)
 	} else {
 		_, err := payment.NewPrepaidGateway("paypal", "paypal_prepaid_wallet_deposit", map[string]interface{}{
