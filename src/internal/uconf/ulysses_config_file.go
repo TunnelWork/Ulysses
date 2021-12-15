@@ -125,12 +125,12 @@ func (ucf UlyssesConfigFile) LoadCompleteConfig() (CompleteConfig, error) {
 
 	// Make sure table is created.
 	stmt, err := sqlStatement(`CREATE TABLE IF NOT EXISTS dbprefix_config (
-		id INT NOT NULL AUTO_INCREMENT,
-		config_name VARCHAR(32) NOT NULL,
-		config_content TEXT NOT NULL,
-		PRIMARY KEY (id),
-		UNIQUE KEY (config_name)
-	)`)
+        id INT NOT NULL AUTO_INCREMENT,
+        config_name VARCHAR(32) NOT NULL,
+        config_content TEXT NOT NULL,
+        PRIMARY KEY (id),
+        UNIQUE KEY (config_name)
+    )`)
 	if err != nil {
 		return CompleteConfig{}, err
 	}
