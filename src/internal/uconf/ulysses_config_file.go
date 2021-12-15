@@ -51,6 +51,7 @@ func LoadConfigFromFile(configPath string) (UlyssesConfigFile, error) {
 	}
 
 	err = yaml.Unmarshal(content, &uc)
+	tblPrefix = uc.TblPrefix
 	return uc, err
 }
 
