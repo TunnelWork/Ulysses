@@ -36,6 +36,56 @@ var (
 			&POSTAuthUser,
 		},
 	}
+
+	GETBilling map[string][]*handler = map[string][]*handler{
+		"billingrecord": {
+			&AuthorizationMustBeValid,
+			&GETBillingRecord,
+		},
+		"productlistinggroup": {
+			&GETBillingProductListingGroup,
+		},
+		"productlisting": {
+			&AuthorizationMustBeValidIfExists,
+			&POSTBillingProductListing,
+		},
+		"product": {
+			&AuthorizationMustBeValid,
+			&GETBillingProduct,
+		},
+		"wallet": {
+			&AuthorizationMustBeValid,
+			&GETBillingWallet,
+		},
+	}
+	POSTBilling map[string][]*handler = map[string][]*handler{
+		"billingrecord": {
+			&AuthorizationMustBeValid,
+			&POSTBillingRecord,
+		},
+		"productlistinggroup": {
+			&AuthorizationMustBeValid,
+			&UserMustBeGlobalAdmin,
+			&POSTBillingProductListingGroup,
+		},
+		"productlisting": {
+			&AuthorizationMustBeValid,
+			&UserMustBeGlobalAdmin,
+			&POSTBillingProductListing,
+		},
+		"product": {
+			&AuthorizationMustBeValid,
+			&MFAMustBeEnabled,
+			&MFARespMustBeValid,
+			&POSTBillingProduct,
+		},
+		"wallet": {
+			&AuthorizationMustBeValid,
+			&MFAMustBeEnabled,
+			&MFARespMustBeValid,
+			&POSTBillingWallet,
+		},
+	}
 )
 
 // When checkpoint/endpoint fails, it always respond with api.MessageResponse
@@ -43,14 +93,14 @@ var (
 func registerAPIEndpoints() error {
 	var err error
 	// Auth
-	for endpoint, handlers := range GETAuth {
-		err = api.CGET(api.Auth, endpoint, handlers...)
+	for path, handlers := range GETAuth {
+		err = api.CGET(api.Auth, path, handlers...)
 		if err != nil {
 			return err
 		}
 	}
-	for endpoint, handlers := range POSTAuth {
-		err = api.CPOST(api.Auth, endpoint, handlers...)
+	for path, handlers := range POSTAuth {
+		err = api.CPOST(api.Auth, path, handlers...)
 		if err != nil {
 			return err
 		}

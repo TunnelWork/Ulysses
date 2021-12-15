@@ -16,6 +16,7 @@ import (
 	"github.com/TunnelWork/Ulysses/src/driver"
 	"github.com/TunnelWork/Ulysses/src/internal/utils"
 	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/binding"
 )
 
 /*********************************************************************
@@ -110,13 +111,13 @@ var (
 		/************  END GOROUTINE HEADER  ************/
 		uid, err := utils.AuthorizationToUserID(c)
 		if err != nil {
-			c.AbortWithStatusJSON(http.StatusInternalServerError, utils.RespInternalErr)
+			utils.HandleError(c, err)
 			return
 		}
 
 		_, err = auth.GetUserByID(uid)
 		if err != nil {
-			c.AbortWithStatusJSON(http.StatusInternalServerError, utils.RespInternalErr)
+			utils.HandleError(c, err)
 			return
 		}
 
@@ -157,7 +158,7 @@ var (
 		uid, err := utils.AuthorizationToUserID(c)
 		if err != nil {
 			logging.Debug("Can't get userID: %s", err.Error())
-			c.AbortWithStatusJSON(http.StatusInternalServerError, utils.RespInternalErr) // other unhandled error
+			utils.HandleError(c, err) // other unhandled error
 			return
 		}
 
@@ -167,7 +168,7 @@ var (
 				Response: map[string]string{},
 			},
 		}
-		err = c.BindJSON(&form)
+		err = c.ShouldBindBodyWith(&form, binding.JSON)
 		if err != nil {
 			if auth.AnyMFARegistered(uid) { // If user registered with MFA, must provide MFA response.
 				logging.Debug("A valid MFA response is expected, but not received.")
@@ -209,7 +210,7 @@ var (
 		user, err := utils.AuthorizationToUser(c)
 		if err != nil {
 			logging.Debug("UserMustBeProductAdmin: Can't get user(%d): %s", user.ID(), err.Error())
-			c.AbortWithStatusJSON(http.StatusInternalServerError, utils.RespInternalErr) // other unhandled error
+			utils.HandleError(c, err) // other unhandled error
 			return
 		}
 
@@ -234,7 +235,7 @@ var (
 		user, err := utils.AuthorizationToUser(c)
 		if err != nil {
 			logging.Debug("UserMustBeProductAdmin: Can't get user(%d): %s", user.ID(), err.Error())
-			c.AbortWithStatusJSON(http.StatusInternalServerError, utils.RespInternalErr) // other unhandled error
+			utils.HandleError(c, err) // other unhandled error
 			return
 		}
 
@@ -259,7 +260,7 @@ var (
 		user, err := utils.AuthorizationToUser(c)
 		if err != nil {
 			logging.Debug("UserMustBeProductAdmin: Can't get user(%d): %s", user.ID(), err.Error())
-			c.AbortWithStatusJSON(http.StatusInternalServerError, utils.RespInternalErr) // other unhandled error
+			utils.HandleError(c, err) // other unhandled error
 			return
 		}
 		// check if Affiliation User
@@ -294,7 +295,7 @@ var (
 		user, err := utils.AuthorizationToUser(c)
 		if err != nil {
 			logging.Debug("UserMustBeProductAdmin: Can't get user(%d): %s", user.ID(), err.Error())
-			c.AbortWithStatusJSON(http.StatusInternalServerError, utils.RespInternalErr) // other unhandled error
+			utils.HandleError(c, err) // other unhandled error
 			return
 		}
 
@@ -319,7 +320,7 @@ var (
 		user, err := utils.AuthorizationToUser(c)
 		if err != nil {
 			logging.Debug("UserMustBeProductAdmin: Can't get user(%d): %s", user.ID(), err.Error())
-			c.AbortWithStatusJSON(http.StatusInternalServerError, utils.RespInternalErr) // other unhandled error
+			utils.HandleError(c, err) // other unhandled error
 			return
 		}
 
@@ -344,7 +345,7 @@ var (
 		user, err := utils.AuthorizationToUser(c)
 		if err != nil {
 			logging.Debug("UserMustBeProductAdmin: Can't get user(%d): %s", user.ID(), err.Error())
-			c.AbortWithStatusJSON(http.StatusInternalServerError, utils.RespInternalErr) // other unhandled error
+			utils.HandleError(c, err) // other unhandled error
 			return
 		}
 
@@ -376,7 +377,7 @@ var (
 		user, err := utils.AuthorizationToUser(c)
 		if err != nil {
 			logging.Debug("UserMustBeProductAdmin: Can't get user(%d): %s", user.ID(), err.Error())
-			c.AbortWithStatusJSON(http.StatusInternalServerError, utils.RespInternalErr) // other unhandled error
+			utils.HandleError(c, err) // other unhandled error
 			return
 		}
 
@@ -401,7 +402,7 @@ var (
 		user, err := utils.AuthorizationToUser(c)
 		if err != nil {
 			logging.Debug("UserMustBeProductAdmin: Can't get user(%d): %s", user.ID(), err.Error())
-			c.AbortWithStatusJSON(http.StatusInternalServerError, utils.RespInternalErr) // other unhandled error
+			utils.HandleError(c, err) // other unhandled error
 			return
 		}
 
@@ -433,7 +434,7 @@ var (
 		user, err := utils.AuthorizationToUser(c)
 		if err != nil {
 			logging.Debug("UserMustBeProductAdmin: Can't get user(%d): %s", user.ID(), err.Error())
-			c.AbortWithStatusJSON(http.StatusInternalServerError, utils.RespInternalErr) // other unhandled error
+			utils.HandleError(c, err) // other unhandled error
 			return
 		}
 

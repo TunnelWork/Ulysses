@@ -82,7 +82,7 @@ func (MFA) InitSignUp(c *gin.Context, uid uint64) {
 	var err error
 
 	var form FormMfaInitSignUp = FormMfaInitSignUp{}
-	err = c.BindJSON(&form)
+	err = c.ShouldBindBodyWith(&form, binding.JSON)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, utils.RespBadRequest)
 		return
@@ -109,7 +109,7 @@ func (MFA) InitSignUp(c *gin.Context, uid uint64) {
 func (MFA) CompleteSignUp(c *gin.Context, uid uint64) {
 	var form FormMfaCompleteSignUp = FormMfaCompleteSignUp{}
 
-	if err := c.BindJSON(&form); err != nil {
+	if err := c.ShouldBindBodyWith(&form, binding.JSON); err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, utils.RespBadRequest)
 		return
 	}
@@ -123,7 +123,7 @@ func (MFA) CompleteSignUp(c *gin.Context, uid uint64) {
 
 func (MFA) NewChallenge(c *gin.Context, uid uint64) {
 	var form FormMfaNewChallenge = FormMfaNewChallenge{}
-	if err := c.BindJSON(&form); err != nil {
+	if err := c.ShouldBindBodyWith(&form, binding.JSON); err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, utils.RespBadRequest)
 		return
 	}
@@ -152,7 +152,7 @@ func (MFA) SubmitChallenge(c *gin.Context, uid uint64) {
 		},
 	}
 
-	if err := c.BindJSON(&form); err != nil {
+	if err := c.ShouldBindBodyWith(&form, binding.JSON); err != nil {
 		logging.Debug("A valid MFA response is expected, but not received.")
 		c.AbortWithStatusJSON(http.StatusBadRequest, utils.RespMfaResponseRequired)
 		return

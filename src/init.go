@@ -3,6 +3,7 @@ package main
 import (
 	"crypto/ed25519"
 	"flag"
+	"fmt"
 	"os/signal"
 	"sync"
 	"syscall"
@@ -20,7 +21,7 @@ import (
 	"github.com/TunnelWork/Ulysses/src/internal/utils"
 	"github.com/robfig/cron/v3"
 
-	_ "github.com/TunnelWork/payment.PayPal"
+	paypal "github.com/TunnelWork/payment.PayPal/v2"
 	_ "github.com/TunnelWork/server.Trojan"
 )
 
@@ -99,7 +100,8 @@ func globalInit() {
 	payment.Setup(dbPool, completeConfig.Mysql.TblPrefix) // TODO
 	security.SetupCipher(completeConfig.Security.Cipher())
 
-	/*** Non-Volatile Plugins ***/
+	/*** Plugins ***/
+	// MFA
 	totp := utotp.NewTOTP(map[string]string{
 		"issuer": "Ulysses",
 	})
@@ -110,6 +112,20 @@ func globalInit() {
 	})
 	auth.RegMFAInstance("utotp", totp)
 	auth.RegMFAInstance("uwebauthn", webauthn)
+	// Payment
+	if paypalPrepaidConfig, err := paypal.LoadPrepaidConfig(dbPool, completeConfig.Mysql.TblPrefix, "paypal_prepaid_wallet_deposit"); err != nil {
+		logging.Fatal("cannot load config for paypal prepaid gateway, error: ", err)
+	} else {
+		_, err := payment.NewPrepaidGateway("paypal", "paypal_prepaid_wallet_deposit", map[string]interface{}{
+			"clientID":     paypalPrepaidConfig.ClientID,
+			"secretID":     paypalPrepaidConfig.SecretID,
+			"apiBase":      paypalPrepaidConfig.ApiBase,
+			"callbackBase": fmt.Sprintf("%s/%spayment/callback/", completeConfig.Http.URLComplete, completeConfig.Http.URLPrefix),
+		})
+		if err != nil {
+			logging.Fatal("cannot initialize paypal prepaid gateway, error: ", err)
+		}
+	}
 
 	utils.TokenRevoker = themis.NewOfflineRevoker()
 	utils.TokenPrivKey = completeConfig.Security.Ed25519Key()
@@ -122,6 +138,7 @@ func globalInit() {
 	}
 
 	api.FinalizeGinEngine(ginRouter, completeConfig.Http.URLPrefix)
+
 	ginRouter.HandleMethodNotAllowed = true
 	ginRouter.RedirectTrailingSlash = true
 	ginRouter.RedirectFixedPath = true

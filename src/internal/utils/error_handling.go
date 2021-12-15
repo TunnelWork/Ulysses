@@ -22,6 +22,6 @@ func HandleError(c *gin.Context, err error) {
 	logging.Error("[%s] %s", index, err.Error())
 
 	c.AbortWithStatusJSON(http.StatusInternalServerError, api.PayloadResponse(api.ERROR, gin.H{
-		"err_index": index,
+		"ref": index,
 	}))
 }

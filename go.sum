@@ -4,11 +4,11 @@ github.com/TunnelWork/Harpocrates v1.0.1/go.mod h1:+I/F5JiIvWsllxHEInacG+j9t2IO9
 github.com/TunnelWork/Themis v1.1.0 h1:QNDVWwuhrPKAST1BlgYiY9ijmxY77i0WoxMB+4k3J7s=
 github.com/TunnelWork/Themis v1.1.0/go.mod h1:GQyrS21gkc22O+jaJ3+rMHQTZAYERVnABv/IOgYPbNo=
 github.com/TunnelWork/Ulysses.Lib v0.1.0/go.mod h1:u2/EULdJzpNEBUvDYfjuXxsEoANrasOzGX+7ZzqvNsM=
-github.com/TunnelWork/Ulysses.Lib v0.1.1/go.mod h1:u2/EULdJzpNEBUvDYfjuXxsEoANrasOzGX+7ZzqvNsM=
-github.com/TunnelWork/Ulysses.Lib v0.1.10 h1:GhdKg5MbSmvc6Ql0EOjqY4t1VQEyYGRuGKwhhVH3Uzg=
-github.com/TunnelWork/Ulysses.Lib v0.1.10/go.mod h1:u2/EULdJzpNEBUvDYfjuXxsEoANrasOzGX+7ZzqvNsM=
-github.com/TunnelWork/payment.PayPal v1.1.1 h1:x8Y1PsGxcewiUAbQmyIuCR0+afODdpxBnJuBDPLGucw=
-github.com/TunnelWork/payment.PayPal v1.1.1/go.mod h1:DgXvdRuZTyJQrqwB0XBSQK8QPQpQ/g7J4OKCJ4d5aJc=
+github.com/TunnelWork/Ulysses.Lib v0.1.11/go.mod h1:u2/EULdJzpNEBUvDYfjuXxsEoANrasOzGX+7ZzqvNsM=
+github.com/TunnelWork/Ulysses.Lib v0.1.12 h1:mUlIzi/27kpcxudaXwJmBpsCXWCo9267MtTs+OjoiTg=
+github.com/TunnelWork/Ulysses.Lib v0.1.12/go.mod h1:u2/EULdJzpNEBUvDYfjuXxsEoANrasOzGX+7ZzqvNsM=
+github.com/TunnelWork/payment.PayPal/v2 v2.0.0 h1:4JPPl51GtaYmXZTYrhG0OtXEexlztTSeQNU0OciWWN8=
+github.com/TunnelWork/payment.PayPal/v2 v2.0.0/go.mod h1:dZDkQXlLKjGS1xBqMSwY+k4XASkt36wc0jtZNh1zVQM=
 github.com/TunnelWork/server.Trojan v0.1.1 h1:YEFBcr31CO90ykcKavNn+DL1Rk2gDoNq/jEgzwhOCmY=
 github.com/TunnelWork/server.Trojan v0.1.1/go.mod h1:nsLWLGN2lOC7KEwFaXK7ODIEvYzC2un9vRdf03t8Wl4=
 github.com/boombuler/barcode v1.0.1-0.20190219062509-6c824513bacc h1:biVzkmvwrH8WK8raXaxBx6fRVTlJILwEwQGL1I/ByEI=

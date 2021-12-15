@@ -18,10 +18,12 @@ import (
 	"github.com/TunnelWork/Ulysses/src/driver"
 	"github.com/TunnelWork/Ulysses/src/internal/utils"
 	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/binding"
 )
 
 var (
-	Auth = driver.Auth{}
+	Auth    = driver.Auth{}
+	Billing = driver.Billing{}
 )
 
 // A endpoint is a handler assuming the HTTP request has already passed the authentication check (if needed) and:
@@ -50,7 +52,7 @@ var (
 		defer slaveUnblock()
 		/************  END GOROUTINE HEADER  ************/
 		var form FormAuthorize = FormAuthorize{}
-		err := c.BindJSON(&form)
+		err := c.ShouldBindBodyWith(&form, binding.JSON)
 		if err != nil {
 			c.AbortWithStatusJSON(http.StatusBadRequest, utils.RespBadRequest)
 			return
@@ -58,14 +60,14 @@ var (
 
 		user, err := auth.GetUserByEmailPassword(form.Email, utils.HashPassword(form.Password))
 		if err != nil {
-			c.AbortWithStatusJSON(http.StatusInternalServerError, utils.RespInternalErr)
+			utils.HandleError(c, err)
 			return
 		}
 
 		// Create Authorization Token
 		token, err := themis.GetNewBearerToken(user.ID(), net.ParseIP(c.ClientIP()), time.Hour, utils.TokenRevoker)
 		if err != nil {
-			c.AbortWithStatusJSON(http.StatusInternalServerError, utils.RespInternalErr)
+			utils.HandleError(c, err)
 			return
 		}
 		token.Sign(utils.TokenPrivKey)
@@ -88,7 +90,7 @@ var (
 		user, err := utils.AuthorizationToUser(c)
 		if err != nil {
 			logging.Debug("Can't get user: %s", err.Error())
-			c.AbortWithStatusJSON(http.StatusInternalServerError, utils.RespInternalErr)
+			utils.HandleError(c, err)
 			return
 		}
 		if user == nil {
@@ -115,7 +117,7 @@ var (
 		user, err := utils.AuthorizationToUser(c)
 		if err != nil {
 			logging.Debug("Can't get user: %s", err.Error())
-			c.AbortWithStatusJSON(http.StatusInternalServerError, utils.RespInternalErr)
+			utils.HandleError(c, err)
 			return
 		}
 		if user == nil {
@@ -146,7 +148,7 @@ var (
 		uid, err := utils.AuthorizationToUserID(c)
 		if err != nil {
 			logging.Debug("Can't get uid: %s", err.Error())
-			c.AbortWithStatusJSON(http.StatusInternalServerError, utils.RespInternalErr)
+			utils.HandleError(c, err)
 			return
 		}
 
@@ -167,7 +169,7 @@ var (
 		uid, err := utils.AuthorizationToUserID(c)
 		if err != nil {
 			logging.Debug("Can't get uid: %s", err.Error())
-			c.AbortWithStatusJSON(http.StatusInternalServerError, utils.RespInternalErr)
+			utils.HandleError(c, err)
 			return
 		}
 
@@ -200,7 +202,7 @@ var (
 		user, err := utils.AuthorizationToUser(c)
 		if err != nil {
 			logging.Debug("Can't get user: %s", err.Error())
-			c.AbortWithStatusJSON(http.StatusInternalServerError, utils.RespInternalErr)
+			utils.HandleError(c, err)
 			return
 		}
 
@@ -229,7 +231,7 @@ var (
 		user, err := utils.AuthorizationToUser(c)
 		if err != nil {
 			logging.Debug("Can't get user: %s", err.Error())
-			c.AbortWithStatusJSON(http.StatusInternalServerError, utils.RespInternalErr)
+			utils.HandleError(c, err)
 			return
 		}
 
@@ -253,5 +255,261 @@ var (
 
 // Billing
 var (
-// BillingProductListingGroup
+	// BillingRecord
+	// GET api/billing/billingrecord?cmd=<ListByWalletID|ListAll>, Authorization needed
+	// POST api/billing/billingrecord?cmd=<Create>, Authorization needed
+	GETBillingRecord endpoint = func(c *gin.Context) {
+		/************ START GOROUTINE HEADER ************/
+		slaveWait()
+		slaveBlock()
+		defer slaveUnblock()
+		/************  END GOROUTINE HEADER  ************/
+		user, err := utils.AuthorizationToUser(c)
+		if err != nil {
+			logging.Debug("Can't get user: %s", err.Error())
+			utils.HandleError(c, err)
+			return
+		}
+
+		cmd := c.Query("cmd")
+		switch cmd {
+		case "ListByWalletID":
+			Billing.BillingRecord.ListByWalletID(c, user)
+		case "ListAll":
+			Billing.BillingRecord.ListAll(c, user)
+		default:
+			c.JSON(http.StatusBadRequest, utils.RespBadRequest)
+		}
+	}
+	POSTBillingRecord endpoint = func(c *gin.Context) {
+		/************ START GOROUTINE HEADER ************/
+		slaveWait()
+		slaveBlock()
+		defer slaveUnblock()
+		/************  END GOROUTINE HEADER  ************/
+		user, err := utils.AuthorizationToUser(c)
+		if err != nil {
+			logging.Debug("Can't get user: %s", err.Error())
+			utils.HandleError(c, err)
+			return
+		}
+
+		cmd := c.Query("cmd")
+		switch cmd {
+		case "Create":
+			Billing.BillingRecord.Create(c, user)
+		default:
+			c.JSON(http.StatusBadRequest, utils.RespBadRequest)
+		}
+	}
+
+	// ProductListingGroup
+	// GET api/billing/productlistinggroup?cmd=<List|GetByID>
+	// POST api/billing/productlistinggroup?cmd=<Create|Update|Delete>
+	GETBillingProductListingGroup endpoint = func(c *gin.Context) {
+		/************ START GOROUTINE HEADER ************/
+		slaveWait()
+		slaveBlock()
+		defer slaveUnblock()
+		/************  END GOROUTINE HEADER  ************/
+
+		cmd := c.Query("cmd")
+		switch cmd {
+		case "List":
+			Billing.ProductListingGroup.List(c)
+		case "GetByID":
+			Billing.ProductListingGroup.GetByID(c)
+		default:
+			c.JSON(http.StatusBadRequest, utils.RespBadRequest)
+		}
+	}
+	POSTBillingProductListingGroup endpoint = func(c *gin.Context) {
+		/************ START GOROUTINE HEADER ************/
+		slaveWait()
+		slaveBlock()
+		defer slaveUnblock()
+		/************  END GOROUTINE HEADER  ************/
+
+		cmd := c.Query("cmd")
+		switch cmd {
+		case "Create":
+			Billing.ProductListingGroup.Create(c)
+		case "Update":
+			Billing.ProductListingGroup.Update(c)
+		case "Delete":
+			Billing.ProductListingGroup.Delete(c)
+		default:
+			c.JSON(http.StatusBadRequest, utils.RespBadRequest)
+		}
+	}
+
+	// ProductListing
+	// GET api/billing/productlisting?cmd=<ListByGroupID|GetAvailableByID|GetByID>, Authorization optional
+	// POST api/billing/productlisting?cmd=<Create|Update|Delete|Hide|Unhide|Discontinue|Reactivate>
+	GETBillingProductListing endpoint = func(c *gin.Context) {
+		/************ START GOROUTINE HEADER ************/
+		slaveWait()
+		slaveBlock()
+		defer slaveUnblock()
+		/************  END GOROUTINE HEADER  ************/
+		user, err := utils.AuthorizationToUser(c)
+		if err != nil {
+			logging.Debug("Can't get user: %s", err.Error())
+			utils.HandleError(c, err)
+			return
+		}
+
+		cmd := c.Query("cmd")
+		switch cmd {
+		case "ListByGroupID":
+			Billing.ProductListing.ListByGroupID(c, user)
+		case "GetAvailableByID":
+			Billing.ProductListing.GetAvailableByID(c)
+		case "GetByID":
+			Billing.ProductListing.GetByID(c, user)
+		default:
+			c.JSON(http.StatusBadRequest, utils.RespBadRequest)
+		}
+	}
+	POSTBillingProductListing endpoint = func(c *gin.Context) {
+		/************ START GOROUTINE HEADER ************/
+		slaveWait()
+		slaveBlock()
+		defer slaveUnblock()
+		/************  END GOROUTINE HEADER  ************/
+
+		cmd := c.Query("cmd")
+		switch cmd {
+		case "Create":
+			Billing.ProductListing.Create(c)
+		case "Update":
+			Billing.ProductListing.Update(c)
+		case "Delete":
+			Billing.ProductListing.Delete(c)
+		case "Hide":
+			Billing.ProductListing.Hide(c)
+		case "Unhide":
+			Billing.ProductListing.Unhide(c)
+		case "Discontinue":
+			Billing.ProductListing.Discontinue(c)
+		case "Reactivate":
+			Billing.ProductListing.Reactivate(c)
+		default:
+			c.JSON(http.StatusBadRequest, utils.RespBadRequest)
+		}
+	}
+
+	// Product
+	// GET api/billing/product?cmd=<GetBySN|ListByID|ListByOwner|ListAll>, Authorization needed
+	// POST api/billing/product?cmd=<CreateByListingID|Update|Terminate|ScheduleForTerminate>, Authorization needed
+	GETBillingProduct endpoint = func(c *gin.Context) {
+		/************ START GOROUTINE HEADER ************/
+		slaveWait()
+		slaveBlock()
+		defer slaveUnblock()
+		/************  END GOROUTINE HEADER  ************/
+
+		user, err := utils.AuthorizationToUser(c)
+		if err != nil {
+			logging.Debug("Can't get user: %s", err.Error())
+			utils.HandleError(c, err)
+			return
+		}
+
+		cmd := c.Query("cmd")
+		switch cmd {
+		case "GetBySN":
+			Billing.Product.GetBySN(c, user)
+		case "ListByID":
+			Billing.Product.ListByID(c, user)
+		case "ListByOwner":
+			Billing.Product.ListByOwner(c, user)
+		case "ListAll":
+			Billing.Product.ListAll(c, user)
+		default:
+			c.JSON(http.StatusBadRequest, utils.RespBadRequest)
+		}
+	}
+	POSTBillingProduct endpoint = func(c *gin.Context) {
+		/************ START GOROUTINE HEADER ************/
+		slaveWait()
+		slaveBlock()
+		defer slaveUnblock()
+		/************  END GOROUTINE HEADER  ************/
+
+		user, err := utils.AuthorizationToUser(c)
+		if err != nil {
+			logging.Debug("Can't get user: %s", err.Error())
+			utils.HandleError(c, err)
+			return
+		}
+
+		cmd := c.Query("cmd")
+		switch cmd {
+		case "CreateByListingID":
+			Billing.Product.CreateByListingID(c, user)
+		case "Update":
+			Billing.Product.Update(c, user)
+		case "Terminate":
+			Billing.Product.Terminate(c, user)
+		case "ScheduleForTerminate":
+			Billing.Product.ScheduleForTerminate(c, user)
+		default:
+			c.JSON(http.StatusBadRequest, utils.RespBadRequest)
+		}
+	}
+
+	// Wallet
+	// GET api/billing/wallet?cmd=<View>, Authorization needed
+	// POST api/billing/wallet?cmd=<Deposit|Withdraw|Enable|Disable>, Authorization needed
+	GETBillingWallet endpoint = func(c *gin.Context) {
+		/************ START GOROUTINE HEADER ************/
+		slaveWait()
+		slaveBlock()
+		defer slaveUnblock()
+		/************  END GOROUTINE HEADER  ************/
+
+		user, err := utils.AuthorizationToUser(c)
+		if err != nil {
+			logging.Debug("Can't get user: %s", err.Error())
+			utils.HandleError(c, err)
+			return
+		}
+
+		cmd := c.Query("cmd")
+		switch cmd {
+		case "View":
+			Billing.Wallet.View(c, user)
+		default:
+			c.JSON(http.StatusBadRequest, utils.RespBadRequest)
+		}
+	}
+	POSTBillingWallet endpoint = func(c *gin.Context) {
+		/************ START GOROUTINE HEADER ************/
+		slaveWait()
+		slaveBlock()
+		defer slaveUnblock()
+		/************  END GOROUTINE HEADER  ************/
+
+		user, err := utils.AuthorizationToUser(c)
+		if err != nil {
+			logging.Debug("Can't get user: %s", err.Error())
+			utils.HandleError(c, err)
+			return
+		}
+
+		cmd := c.Query("cmd")
+		switch cmd {
+		case "Deposit":
+			Billing.Wallet.Deposit(c, user)
+		case "Withdraw":
+			Billing.Wallet.Withdraw(c, user)
+		case "Enable":
+			Billing.Wallet.Enable(c, user)
+		case "Disable":
+			Billing.Wallet.Disable(c, user)
+		default:
+			c.JSON(http.StatusBadRequest, utils.RespBadRequest)
+		}
+	}
 )
