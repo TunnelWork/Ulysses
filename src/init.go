@@ -116,7 +116,7 @@ func globalInit() {
 	if paypalPrepaidConfig, err := paypal.LoadPrepaidConfig(dbPool, completeConfig.Mysql.TblPrefix, "paypal_wallet"); err != nil {
 		logging.Fatal("cannot load config for paypal prepaid gateway, error: ", err)
 	} else {
-		_, err := payment.NewPrepaidGateway("paypal", "paypal_prepaid_wallet_deposit", map[string]interface{}{
+		_, err := payment.NewPrepaidGateway("paypal", "paypal_prepaid_wallet_deposit", map[string]string{
 			"clientID":     paypalPrepaidConfig.ClientID,
 			"secretID":     paypalPrepaidConfig.SecretID,
 			"apiBase":      paypalPrepaidConfig.ApiBase,
