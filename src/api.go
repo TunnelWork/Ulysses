@@ -66,11 +66,15 @@ var (
 		"productlistinggroup": {
 			&AuthorizationMustBeValid,
 			&UserMustBeGlobalAdmin,
+			&MFAMustBeEnabled,
+			&MFARespMustBeValid,
 			&POSTBillingProductListingGroup,
 		},
 		"productlisting": {
 			&AuthorizationMustBeValid,
 			&UserMustBeGlobalAdmin,
+			&MFAMustBeEnabled,
+			&MFARespMustBeValid,
 			&POSTBillingProductListing,
 		},
 		"product": {
@@ -84,6 +88,22 @@ var (
 			&MFAMustBeEnabled,
 			&MFARespMustBeValid,
 			&POSTBillingWallet,
+		},
+	}
+
+	GETServer map[string][]*handler = map[string][]*handler{
+		"provisioning/account": {
+			&AuthorizationMustBeValid,
+			&GETProvisioningAccount,
+		},
+	}
+	POSTServer map[string][]*handler = map[string][]*handler{
+		"provisioning/account": {
+			&AuthorizationMustBeValid,
+			&UserMustBeGlobalAdmin,
+			&MFAMustBeEnabled,
+			&MFARespMustBeValid,
+			&POSTProvisioningAccount,
 		},
 	}
 )

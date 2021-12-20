@@ -24,6 +24,7 @@ import (
 var (
 	Auth    = driver.Auth{}
 	Billing = driver.Billing{}
+	Server  = driver.Server{}
 )
 
 // A endpoint is a handler assuming the HTTP request has already passed the authentication check (if needed) and:
@@ -508,6 +509,66 @@ var (
 			Billing.Wallet.Enable(c, user)
 		case "Disable":
 			Billing.Wallet.Disable(c, user)
+		default:
+			c.JSON(http.StatusBadRequest, utils.RespBadRequest)
+		}
+	}
+)
+
+// Server
+var (
+	// ProvisioningServer
+	//// ProvisioningAccount
+	//// GET api/server/provisioning/account?cmd=GetBySN, Authorization needed
+	//// POST api/server/provisioning/account?cmd=<Update|Delete|Suspend|Unsuspend|Refresh>, Authorization needed
+	GETProvisioningAccount endpoint = func(c *gin.Context) {
+		/************ START GOROUTINE HEADER ************/
+		slaveWait()
+		slaveBlock()
+		defer slaveUnblock()
+		/************  END GOROUTINE HEADER  ************/
+
+		user, err := utils.AuthorizationToUser(c)
+		if err != nil {
+			logging.Debug("Can't get user: %s", err.Error())
+			utils.HandleError(c, err)
+			return
+		}
+
+		cmd := c.Query("cmd")
+		switch cmd {
+		case "GetBySN":
+			Server.Provisioning.Account.GetBySN(c, user)
+		default:
+			c.JSON(http.StatusBadRequest, utils.RespBadRequest)
+		}
+	}
+	POSTProvisioningAccount endpoint = func(c *gin.Context) {
+		/************ START GOROUTINE HEADER ************/
+		slaveWait()
+		slaveBlock()
+		defer slaveUnblock()
+		/************  END GOROUTINE HEADER  ************/
+
+		user, err := utils.AuthorizationToUser(c)
+		if err != nil {
+			logging.Debug("Can't get user: %s", err.Error())
+			utils.HandleError(c, err)
+			return
+		}
+
+		cmd := c.Query("cmd")
+		switch cmd {
+		case "Update":
+			Server.Provisioning.Account.Update(c, user)
+		case "Delete":
+			Server.Provisioning.Account.Delete(c, user)
+		case "Suspend":
+			Server.Provisioning.Account.Suspend(c, user)
+		case "Unsuspend":
+			Server.Provisioning.Account.Unsuspend(c, user)
+		case "Refresh":
+			Server.Provisioning.Account.Refresh(c, user)
 		default:
 			c.JSON(http.StatusBadRequest, utils.RespBadRequest)
 		}
