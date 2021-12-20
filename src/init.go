@@ -66,33 +66,47 @@ func globalInit() {
 
 	/*** Cron ***/
 	crontab = cron.New()
-	// // Everyday at midnight
-	// crontab.AddFunc("0 0 0 * * *", func() {
-	// 	errs := billing.DailyRecurringBilling()
-	// 	if len(errs) > 0 {
-	// 		for _, err := range errs {
-	// 			logging.Error(err)
-	// 		}
-	// 	}
-	// })
-	// // Every hour
-	// crontab.AddFunc("0 0 * * * *", func() {
-	// 	errs := billing.HourlyUsageBilling()
-	// 	if len(errs) > 0 {
-	// 		for _, err := range errs {
-	// 			logging.Error(err)
-	// 		}
-	// 	}
-	// })
-	// // Every hour
-	// crontab.AddFunc("0 0 * * * *", func() {
-	// 	errs := billing.HourlyProductTermination()
-	// 	if len(errs) > 0 {
-	// 		for _, err := range errs {
-	// 			logging.Error(err)
-	// 		}
-	// 	}
-	// })
+	// Everyday at midnight
+	crontab.AddFunc("0 0 0 * * *", func() {
+		errs := billing.DailyRecurringBilling()
+		if len(errs) > 0 {
+			logging.Error("Cronjob: DailyRecurringBilling() returned error(s):")
+			for _, err := range errs {
+				logging.Error(err.Error())
+			}
+		} else {
+			logging.Info("Cronjob: DailyRecurringBilling() executed successfully.")
+		}
+	})
+	// Every hour, sync usage-based billing
+	crontab.AddFunc("0 0 * * * *", func() {
+		errs := billing.HourlyUsageBilling()
+		if len(errs) > 0 {
+			logging.Error("Cronjob: HourlyUsageBilling() returned error(s):")
+			for _, err := range errs {
+				logging.Error(err.Error())
+			}
+		} else {
+			logging.Info("Cronjob: HourlyUsageBilling() executed successfully.")
+		}
+	})
+	// Every hour, terminate products that is
+	crontab.AddFunc("0 0 * * * *", func() {
+		errs := billing.HourlyProductTermination()
+		if len(errs) > 0 {
+			logging.Error("Cronjob: HourlyProductTermination() returned error(s):")
+			for _, err := range errs {
+				logging.Error(err.Error())
+			}
+		} else {
+			logging.Info("Cronjob: HourlyProductTermination() executed successfully.")
+		}
+	})
+	// Every hour, purge expired tmp database entries
+	crontab.AddFunc("0 0 * * * *", func() {
+		auth.PurgeExpiredTmpEntry()
+		logging.Debug("Cronjob: Purged Tmp Database.")
+	})
 
 	/*** Rest of the Ulysses.Lib ***/
 	auth.Setup(dbPool, completeConfig.Mysql.TblPrefix)
