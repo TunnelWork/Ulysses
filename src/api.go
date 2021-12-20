@@ -112,6 +112,13 @@ var (
 // When checkpoint/endpoint success, it may respond with api.MessageResponse or api.PayloadResponse
 func registerAPIEndpoints() error {
 	var err error
+
+	// Authorize
+	err = api.POST("authorize", &Authorize)
+	if err != nil {
+		return err
+	}
+
 	// Auth
 	for path, handlers := range GETAuth {
 		err = api.CGET(api.Auth, path, handlers...)
@@ -121,6 +128,34 @@ func registerAPIEndpoints() error {
 	}
 	for path, handlers := range POSTAuth {
 		err = api.CPOST(api.Auth, path, handlers...)
+		if err != nil {
+			return err
+		}
+	}
+
+	// Billing
+	for path, handlers := range GETBilling {
+		err = api.CGET(api.Billing, path, handlers...)
+		if err != nil {
+			return err
+		}
+	}
+	for path, handlers := range POSTBilling {
+		err = api.CPOST(api.Billing, path, handlers...)
+		if err != nil {
+			return err
+		}
+	}
+
+	// Server
+	for path, handlers := range GETServer {
+		err = api.CGET(api.Server, path, handlers...)
+		if err != nil {
+			return err
+		}
+	}
+	for path, handlers := range POSTServer {
+		err = api.CPOST(api.Server, path, handlers...)
 		if err != nil {
 			return err
 		}
