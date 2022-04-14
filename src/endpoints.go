@@ -32,9 +32,11 @@ var (
 // - Make a HTTP response with c.JSON().
 type endpoint = handler
 
-// Authorize
+// Authorize - Create Authorization Token for a user
 var (
-	// Request a Authorization token for a specific user.
+	// Pre-Authorize generate a challenge
+
+	// Request an Authorization token for a specific user.
 	// POST /api/authorize
 	// {
 	//   "email": <email>,
@@ -45,7 +47,7 @@ var (
 	//		status: "success",
 	//		payload: "Bearer <A_BASE64_STRING>"
 	//	}
-	// TODO: Switch to appleboy/gin-jwt
+	// TODO: Switch to a simpler implementation using  appleboy/gin-jwt
 	Authorize endpoint = func(c *gin.Context) {
 		/************ START GOROUTINE HEADER ************/
 		slaveWait()
@@ -59,7 +61,7 @@ var (
 			return
 		}
 
-		user, err := auth.GetUserByEmailPassword(form.Email, utils.HashPassword(form.Password))
+		user, err := auth.GetUserByEmail(form.Email)
 		if err != nil {
 			utils.HandleError(c, err)
 			return

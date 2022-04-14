@@ -36,15 +36,20 @@ type (
 type (
 	FormCreateUser struct {
 		Email       string `json:"email" binding:"required"`
-		Password    string `json:"password" binding:"required"`
+		PublicKey   string `json:"public_key" binding:"required"`
 		Affiliation uint64 `json:"affiliation"`
+
+		Signature string `json:"signature" binding:"required"` // Signature == Sign("REGISTER")
 	}
 
 	FormUpdateUser struct {
 		ID          uint64 `json:"id" binding:"required"`
 		Email       string `json:"email"`
-		Password    string `json:"password"`
+		PublicKey   string `json:"public_key"`
 		Role        uint32 `json:"role"`
 		Affiliation uint64 `json:"affiliation"`
+	}
+
+	FormChangePublicKey struct {
 	}
 )

@@ -5,7 +5,7 @@ go 1.17
 require (
 	github.com/TunnelWork/Harpocrates v1.0.1
 	github.com/TunnelWork/Themis v1.1.0
-	github.com/TunnelWork/Ulysses.Lib v0.1.12
+	github.com/TunnelWork/Ulysses.Lib v0.1.13
 	github.com/TunnelWork/payment.PayPal/v2 v2.0.0
 	github.com/TunnelWork/server.Trojan v0.1.1
 	github.com/creasty/defaults v1.5.2

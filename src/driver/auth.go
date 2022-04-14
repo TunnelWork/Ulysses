@@ -284,7 +284,7 @@ func (User) Create(c *gin.Context, currentUser *auth.User) {
 	}
 	user := &auth.User{
 		Email:         form.Email,
-		Password:      utils.HashPassword(form.Password),
+		PublicKey:     form.PublicKey,
 		Role:          auth.Roles(auth.GLOBAL_EVALUATION_USER, auth.EXEMPT_MARKETING_CONTACT), // New user: in evaluation and not subbed to mailing list.
 		AffiliationID: form.Affiliation,                                                       // Default: no affiliation
 	}

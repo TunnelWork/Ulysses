@@ -1,6 +1,6 @@
 package main
 
-// TODO: Move bcrypt() to security package
+/******** Sync ********/
 
 // slaveBlock() is called by goroutines to prevent main() from exiting before all goroutines are done
 func slaveBlock() {
