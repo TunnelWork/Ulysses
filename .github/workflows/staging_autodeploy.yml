@@ -24,17 +24,17 @@ jobs:
 
     - name: Test
       run: go test -v ./src/...
-  
+
   sync:
     needs: build
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-    
-    - name: rsync file upload
+
+    - name: Update via rsync
       uses: burnett01/rsync-deployments@4.1
       with:
-        switches: -avzur
+        switches: -avzur --delete --exclude 'log' --exclude 'conf' --exclude '.git*' --exclude 'README.md'
         path: ./
         remote_path: /home/staging/ulysses
         remote_host: ${{ secrets.STAGING_SSH_HOST }}
@@ -45,7 +45,7 @@ jobs:
     needs: sync
     runs-on: ubuntu-latest
     steps:
-    - name: reload service
+    - name: Rebuild then Restart (systemd managed)
       uses: appleboy/ssh-action@v0.1.4
       with: 
         host: ${{ secrets.STAGING_SSH_HOST }}
